@@ -50,7 +50,6 @@ CSound* cSoundManager::CreateSound(std::wstring& _path)
 CSound* cSoundManager::CreateFromMemory(LPWAVEFORMATEX _format, char* _buffer, UINT& pointer, size_t _size)
 {
     CSound* sound;
-    pointer += sizeof(WAVEFORMATEX);
     m_Manager.CreateFromMemory(&sound, (BYTE*)_buffer + pointer, _size, _format, DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN);
     pointer += _size;
     return sound;

@@ -8,6 +8,7 @@
 *.obj
 *.ipch
 
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -31,3 +32,10 @@
 *.exe
 *.out
 *.app
+
+# Fordlers
+x64/
+.idea/
+.vs/
+Debug/
+Release/

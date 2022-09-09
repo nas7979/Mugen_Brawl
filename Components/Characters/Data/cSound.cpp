@@ -30,23 +30,14 @@ size_t cSound::GetSize() const
 
 void cSound::SetSound(std::wstring _path)
 {
-    char* buffer;
-    UINT length;
-    if (!cEditorScene::OpenFile(_path, &buffer, length))
-        return;
-    
     m_Sound = SOUND->CreateSound(_path);
-    m_Sound->GetBuffer(0)->GetFormat(&m_WaveFormat, sizeof(WAVEFORMATEX), nullptr);
 
     LPDIRECTSOUNDBUFFER soundBuffer = m_Sound->GetBuffer(0);
+    soundBuffer->GetFormat(&m_WaveFormat, sizeof(WAVEFORMATEX), nullptr);
     LPVOID audioPtr1 = 0;
     DWORD audioBytes1 = 0;
-    LPVOID audioPtr2 = 0;
-    DWORD audioBytes2 = 0;
-    soundBuffer->Lock(0, 0, &audioPtr1, &audioBytes1, &audioPtr2, &audioBytes2, DSBLOCK_ENTIREBUFFER);
-    m_SoundBinary.SetSize(audioBytes1 - 1024);
-    memcpy(const_cast<char*>(m_SoundBinary.GetBuffer()), buffer + 44, audioBytes1 - 1024);
-    soundBuffer->Unlock(&audioPtr1, audioBytes1, &audioPtr2, audioBytes2);
-
-    delete[] buffer;
+    soundBuffer->Lock(0, 0, &audioPtr1, &audioBytes1, nullptr, 0, DSBLOCK_ENTIREBUFFER);
+    m_SoundBinary.SetSize(audioBytes1);
+    memcpy(const_cast<char*>(m_SoundBinary.GetBuffer()), audioPtr1, audioBytes1);
+    soundBuffer->Unlock(&audioPtr1, audioBytes1, nullptr, 0);
 }
