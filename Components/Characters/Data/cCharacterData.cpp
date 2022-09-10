@@ -21,7 +21,7 @@ void cCharacterData::Serialize(char* _buffer, UINT& _pointer) const
 {
     short animationCount = m_Animations.size();
     short soundCount = m_SoundSets.size();
-    
+
     CopyTo(_buffer, _pointer, &animationCount, sizeof(short));
     CopyTo(_buffer, _pointer, &soundCount, sizeof(short));
     CopyTo(_buffer, _pointer, &m_Version, sizeof(float) * 1 + sizeof(short) * 12);
@@ -72,6 +72,8 @@ void cCharacterData::Deserialize(char* _buffer, UINT& _pointer)
     }
 
     m_Palettes.Deserialize(_buffer, _pointer);
+
+    m_Version = CURRENT_VERSION;
 }
 
 size_t cCharacterData::GetSize() const

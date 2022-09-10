@@ -29,5 +29,8 @@ void cHitBox::Deserialize(char* _buffer, UINT& _pointer)
 
 size_t cHitBox::GetSize() const
 {
-    return cSpriteBox::GetSize() + sizeof(short) * 4 + sizeof(float) * 3;
+    if (GET_CURRENT_DATA_VERSION == 1)
+        return cSpriteBox::GetSize() + sizeof(short) * 4 + sizeof(float) * 3;
+    else
+        return cSpriteBox::GetSize() + sizeof(short) * 5 + sizeof(float) * 3;
 }
