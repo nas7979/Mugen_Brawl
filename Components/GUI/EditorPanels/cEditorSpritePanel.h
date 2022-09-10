@@ -8,6 +8,16 @@ static const Vec3 EditorSpriteCenterPos = Vec3(1020, 700, 0.5f);
 
 class cEditorSpritePanel : public cEditorPanel, cMsgProcHandler
 {
+enum OnionSkin
+{
+    Idle,
+    Jump,
+    Prev,
+    Next,
+    Custom,
+    End
+};
+    
 public:
     cEditorSpritePanel(cObject* _owner) : cEditorPanel(_owner) {}
     ~cEditorSpritePanel() override;
@@ -57,6 +67,10 @@ private:
     std::vector<cObject*> m_SpriteBoxFields;
     std::vector<cObject*> m_HitBoxFields;
     std::vector<cObject*> m_ThrowBoxFields;
+
+    cCharacterSprite* m_OnionSkins[OnionSkin::End];
+    bool m_UsePrevOnionSkin = true;
+    bool m_UseNextOnionSkin = false;
     
     void OnClickOpenImage();
     void OnClickAddAnimation();
@@ -82,4 +96,5 @@ public:
     void OnFrameChanged();
     void SetAnimationByKey(std::string _key);
     void OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::vector<cSpriteBoxArea::SelectedBox> _boxes);
+    void UnlinkRemovedOnionSkinSprites(cCharacterSprite* _spriteToRemove);
 };

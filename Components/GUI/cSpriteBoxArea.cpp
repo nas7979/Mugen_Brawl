@@ -104,7 +104,7 @@ void cSpriteBoxArea::Update()
             m_DrawStartedPos = INPUT->GetMousePos();
         }
     }
-    if (INPUT->KeyUp(VK_LBUTTON))
+    if (INPUT->KeyUp(VK_LBUTTON) && m_DrawStartedPos.x != -1)
     {
         bool isDrag = abs(m_DrawStartedPos.x - INPUT->GetMousePos().x) > 15 && abs(m_DrawStartedPos.y - INPUT->GetMousePos().y) > 15;
         m_DrawStartedPos -= Vec2(EditorSpriteCenterPos.x, EditorSpriteCenterPos.y);

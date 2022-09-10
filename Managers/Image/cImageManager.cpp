@@ -186,9 +186,10 @@ void cImageManager::BeginPaletteSwapShader()
     m_PaletteSwapShader->BeginPass(0);
 }
 
-void cImageManager::SetPaletteSwapShaderParams(cPalette* _palette)
+void cImageManager::SetPaletteSwapShaderParams(cPalette* _palette, int _alpha)
 {
     m_PaletteSwapShader->SetTexture((D3DXHANDLE)"gPaletteTex", _palette->GetTexture());
+    m_PaletteSwapShader->SetFloat((D3DXHANDLE)"gAlpha", _alpha / 255.f);
     m_PaletteSwapShader->CommitChanges();
 }
 

@@ -1,6 +1,9 @@
 ﻿#include "DXUT.h"
 #include "cCharacterAnimation.h"
 
+#include "../../../Scenes/Editor/cEditorScene.h"
+#include "../../Components/GUI/EditorPanels/cEditorSpritePanel.h"
+
 cCharacterAnimation::cCharacterAnimation()
 {
     m_Sprites = new DynamicSerializedVector<cCharacterSprite*>();
@@ -8,8 +11,11 @@ cCharacterAnimation::cCharacterAnimation()
 
 cCharacterAnimation::~cCharacterAnimation()
 {
-    for(auto& iter : (*m_Sprites->GetValue()))
+    for(auto& iter : *m_Sprites->GetValue())
+    {
+        SCENE->GetScene<cEditorScene>()->GetSpritePanel()->UnlinkRemovedOnionSkinSprites(iter);
         delete iter;
+    }
     delete m_Sprites;
 }
 
@@ -45,7 +51,10 @@ cCharacterSprite* cCharacterAnimation::GetSprite(int _frame)
 void cCharacterAnimation::RemoveSprite(int _frame, bool _delete)
 {
     if (_delete)
+    {
+        SCENE->GetScene<cEditorScene>()->GetSpritePanel()->UnlinkRemovedOnionSkinSprites((*m_Sprites)[_frame]);
         delete (*m_Sprites)[_frame];
+    }
     m_Sprites->GetValue()->erase(m_Sprites->GetValue()->_Make_iterator_offset(_frame));
 }
 

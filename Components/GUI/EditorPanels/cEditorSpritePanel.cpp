@@ -29,6 +29,7 @@ void cEditorSpritePanel::Init()
         m_FrameList->SetAnimation((*m_Animations)[_selected->GetComponent<cGUI>()->GetText()]);
     }, true);
     m_AnimationsScrollView->SetElementOffset(Vec2(5, 0));
+    m_AnimationsScrollView->SetResetSelectedOnClickOutSide(true);
 
     CreateButton(Vec2(60, 740), Vec2(100, 40), "<", [&]()->void
     {
@@ -275,6 +276,47 @@ void cEditorSpritePanel::Init()
 void cEditorSpritePanel::Update()
 {
     cEditorPanel::Update();
+
+    if (INPUT->KeyPress(VK_LCONTROL))
+    {
+        if (INPUT->KeyDown('I'))
+        {
+            if (m_OnionSkins[OnionSkin::Idle] != nullptr)
+                m_OnionSkins[OnionSkin::Idle] = nullptr;
+            else
+            {
+                cCharacterAnimation* anim = m_Data->GetAnimation("Idle");
+                if (anim != nullptr && anim->GetLength() > 0)
+                    m_OnionSkins[OnionSkin::Idle] = anim->GetSprite(0);
+            }
+        }
+        
+        if (INPUT->KeyDown('J'))
+        {
+            if (m_OnionSkins[OnionSkin::Jump] != nullptr)
+                m_OnionSkins[OnionSkin::Jump] = nullptr;
+            else
+            {
+                cCharacterAnimation* anim = m_Data->GetAnimation("Jump");
+                if (anim != nullptr && anim->GetLength() > 0)
+                    m_OnionSkins[OnionSkin::Jump] = anim->GetSprite(0);
+            }
+        }
+
+        if (INPUT->KeyDown('U'))
+        {
+            if (m_OnionSkins[OnionSkin::Custom] != nullptr)
+                m_OnionSkins[OnionSkin::Custom] = nullptr;
+            else
+                m_OnionSkins[OnionSkin::Custom] = GetCurSprite();
+        }
+
+        if (INPUT->KeyDown('<'))
+            m_UsePrevOnionSkin = !m_UsePrevOnionSkin;
+
+        if (INPUT->KeyDown('>'))
+            m_UseNextOnionSkin = !m_UseNextOnionSkin;
+    }
 }
 
 void cEditorSpritePanel::Render()
@@ -286,29 +328,59 @@ void cEditorSpritePanel::Render()
     float scale = 1;
     if (m_FrameList->CanEdit())
     {
-        cCharacterSprite* sprite = GetCurSprite();
+        cCharacterSprite* sprite;
+        Vec3 pos;
         scale = m_Data->GetSpriteScale();
-        Vec3 pos = EditorSpriteCenterPos;
-        pos.x += sprite->GetOffset().x * scale;
-        pos.y += sprite->GetOffset().y * scale;
 
         cPalette* palette = m_Data->GetPalette(m_CurPalette);
         if (palette != nullptr)
         {
             IMAGE->BeginPaletteSwapShader();
-            IMAGE->SetPaletteSwapShaderParams(palette);
             
+            IMAGE->SetPaletteSwapShaderParams(palette, 64);
+            for (int i = 0; i < OnionSkin::End; i++)
+            {
+                sprite = m_OnionSkins[i];
+                if (sprite == nullptr || (!m_UsePrevOnionSkin && i == OnionSkin::Prev) || (!m_UseNextOnionSkin && i == OnionSkin::Next))
+                    continue;
+                pos = EditorSpriteCenterPos;
+                pos.x += sprite->GetOffset().x * scale;
+                pos.y += sprite->GetOffset().y * scale;
+                pos.z += 0.01f;
+                IMAGE->RenderSprite(sprite->GetTexture(), pos, 0, Vec2(1,1) * scale, Vec2(0.5f,0.5f), 0xffffffff, true);
+            }
+            
+            IMAGE->EndPaletteSwapShader();
+            IMAGE->BeginPaletteSwapShader();
+
+            sprite = GetCurSprite();
+            pos = EditorSpriteCenterPos;
+            pos.x += sprite->GetOffset().x * scale;
+            pos.y += sprite->GetOffset().y * scale;
+            IMAGE->SetPaletteSwapShaderParams(palette, 255);
             IMAGE->RenderSprite(sprite->GetTexture(), pos, 0, Vec2(1,1) * scale, Vec2(0.5f,0.5f), 0xffffffff, true);
             
             IMAGE->EndPaletteSwapShader();
         }
         else
         {
+            for (int i = 0; i < OnionSkin::End; i++)
+            {
+                sprite = m_OnionSkins[i];
+                if (sprite == nullptr || (!m_UsePrevOnionSkin && i == OnionSkin::Prev) || (!m_UseNextOnionSkin && i == OnionSkin::Next))
+                    continue;
+                pos = EditorSpriteCenterPos;
+                pos.x += sprite->GetOffset().x * scale;
+                pos.y += sprite->GetOffset().y * scale;
+                pos.z += 0.01f;
+                IMAGE->RenderSprite(sprite->GetTexture(), pos, 0, Vec2(1,1) * scale, Vec2(0.5f,0.5f), 0x7fffffff, true);
+            }
+
             IMAGE->RenderSprite(sprite->GetTexture(), pos, 0, Vec2(1,1) * scale, Vec2(0.5f,0.5f), 0xffffffff, true);
         }
     }
 
-    IMAGE->RenderSprite(pixel, EditorSpriteCenterPos, 0, Vec2(500,scale), Vec2(0.5f,0.5f),0x50ffffff, true);
+    IMAGE->RenderSprite(pixel, EditorSpriteCenterPos, 0, Vec2(500,scale), Vec2(0.5f,0),0x50ffffff, true);
     IMAGE->RenderSprite(pixel, EditorSpriteCenterPos, 0, Vec2(scale,500), Vec2(0.5f,0.5f),0x50ffffff, true);
 
     IMAGE->RenderText("Gothic", std::to_string(m_CurPalette + 1) + "/" + std::to_string(m_Data->GetPaletteCount()),
@@ -620,7 +692,7 @@ bool cEditorSpritePanel::HasFocusedGUI()
     || m_EventKeyField->IsFocused() || m_PaletteIndexField->IsFocused() || m_HexColorField->IsFocused() || m_FixedPaletteField->IsFocused() || m_SpriteBoxArea->HasSelectedBox()
     || m_SpriteBoxEventKeyField->IsFocused() || m_HitBoxDamageField->IsFocused() || m_HitBoxDirectionField->IsFocused() || m_HitBoxHitStunMulField->IsFocused()
     || m_HitBoxShieldStunMulField->IsFocused() || m_HitBoxShieldDamageMulField->IsFocused() || m_HitBoxBaseKnockBackField->IsFocused() || m_HitBoxGrowthKnockBackField->IsFocused()
-    || m_ThrowBoxCanThrowMidairField->IsFocused()
+    || m_ThrowBoxCanThrowMidairField->IsFocused() || m_AnimationsScrollView->GetSelectedIndex() >= 0
     ;
 }
 
@@ -657,6 +729,9 @@ void cEditorSpritePanel::Reset()
     
     ReloadAnimationList();
     ReloadPaletteList(true);
+
+    for (int i = 0; i < OnionSkin::End; i++)
+        m_OnionSkins[i] = nullptr;
 }
 
 void cEditorSpritePanel::OnShow()
@@ -683,6 +758,11 @@ void cEditorSpritePanel::OnFrameChanged()
     m_FrameLengthField->SetText(std::to_string(sprite->GetFrameLength()), false);
     m_FixedPaletteField->SetText(std::to_string(sprite->GetFixedPaletteIndex()), false);
     m_EventKeyField->SetText(sprite->GetEventKey(), false);
+
+    int curFrame = m_FrameList->GetFrame();
+    int frameLength = m_FrameList->GetAnimation()->GetLength();
+    m_OnionSkins[OnionSkin::Prev] = m_FrameList->GetAnimation()->GetSprite(curFrame == 0 ? frameLength - 1 : (curFrame - 1) % frameLength);
+    m_OnionSkins[OnionSkin::Next] = m_FrameList->GetAnimation()->GetSprite((curFrame + 1) % frameLength);
 }
 
 void cEditorSpritePanel::SetAnimationByKey(std::string _key)
@@ -720,5 +800,14 @@ void cEditorSpritePanel::OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::
     {
         cThrowBox* box = (cThrowBox*)_boxes[0].box;
         m_HitBoxDamageField->SetText(box->GetCanThrowMidair() ? "1" : "0", false);
+    }
+}
+
+void cEditorSpritePanel::UnlinkRemovedOnionSkinSprites(cCharacterSprite* _spriteToRemove)
+{
+    for (int i = 0; i < OnionSkin::End; i++)
+    {
+        if (m_OnionSkins[i] == _spriteToRemove)
+            m_OnionSkins[i] = nullptr;
     }
 }

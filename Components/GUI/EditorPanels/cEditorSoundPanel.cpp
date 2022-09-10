@@ -36,6 +36,7 @@ void cEditorSoundPanel::Init()
         ReloadSoundsList();
     }, true);
     m_SoundSetsScrollView->SetElementOffset(Vec2(5, 0));
+    m_SoundSetsScrollView->SetResetSelectedOnClickOutSide(true);
 
     m_SoundsScrollView = CreateScrollView(Vec2(800, 450), Vec2(400, 500), Vec2(400, 25), [&](cObject* _selected)->void
     {

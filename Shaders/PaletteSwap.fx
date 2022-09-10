@@ -1,5 +1,6 @@
 texture gMainTex;
 texture gPaletteTex;
+float gAlpha;
 
 sampler2D MainTex = sampler_state
 {
@@ -15,8 +16,9 @@ float4 PS_Main(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 diffuse = tex2D(MainTex, uv);
     int index = diffuse.r * 255;
+    float4 paletteColored = tex2D(PaletteTex, float2(index % 32, index / 32) / 32);
     
-    return tex2D(PaletteTex, float2(index % 32, index / 32) / 32);
+    return float4(paletteColored.r, paletteColored.g, paletteColored.b, gAlpha * paletteColored.a);
 }
 
 technique

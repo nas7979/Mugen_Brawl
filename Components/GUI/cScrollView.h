@@ -24,6 +24,7 @@ private:
     float m_ScrollPos = 0;
     std::function<void(cObject*)> m_OnClick = nullptr;
     int m_SelectedIndex = -1;
+    bool m_ResetSelectedOnClickOutSide = false;
 
     void ReloadElementsPosition();
 
@@ -33,6 +34,7 @@ public:
     void RemoveAllElement();
     void SetScrollPos(float _pos);
     void SetSelectedIndex(int _index) {m_SelectedIndex = min(_index + 1, m_Elements.size()) - 1;}
+    void SetResetSelectedOnClickOutSide(bool _set) {m_ResetSelectedOnClickOutSide = _set;}
     cObject* GetSelectedObject();
     int GetSelectedIndex() {return m_SelectedIndex;}
     cScrollView* SetOnClick(std::function<void(cObject*)> _onClick) {m_OnClick = _onClick; return this;}

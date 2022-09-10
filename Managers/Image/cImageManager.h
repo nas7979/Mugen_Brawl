@@ -45,7 +45,7 @@ public:
     int GetTextWidth(LPD3DXFONT _font, LPCSTR _text, int _offset, int _count);
 
     void BeginPaletteSwapShader();
-    void SetPaletteSwapShaderParams(cPalette* _palette);
+    void SetPaletteSwapShaderParams(cPalette* _palette, int _alpha);
     void EndPaletteSwapShader();
 };
 

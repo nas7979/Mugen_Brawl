@@ -121,7 +121,8 @@ void cScrollView::OnClick()
 void cScrollView::OnClickOutSide()
 {
     cGUI::OnClickOutSide();
-    // m_SelectedIndex = -1;
+    if (m_ResetSelectedOnClickOutSide)
+        m_SelectedIndex = -1;
 }
 
 void cScrollView::MsgProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
