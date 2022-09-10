@@ -2,6 +2,7 @@
 #include "cEditorSpritePanel.h"
 
 #include "cEditorCharacterPanel.h"
+#include "../cDropDown.h"
 #include "../cScrollView.h"
 #include "../../../Scenes/Editor/cEditorScene.h"
 
@@ -51,6 +52,7 @@ void cEditorSpritePanel::Init()
         m_SelectedPaletteEntryIndex = m_PaletteScrollView->GetSelectedIndex();
         m_HexColorField->SetText(IntToHex(m_Data->GetPalette(m_CurPalette)->GetColor(m_SelectedPaletteEntryIndex)));
     }, true);
+    m_PaletteScrollView->SetResetSelectedOnClickOutSide(true);
 
     m_HexColorField = CreateInputField(Vec2(), Vec2(150, 40), "Hex Color", 24, false);
     m_HexColorField->SetOnTextChanged([&](cInputField* _this)->void
@@ -259,6 +261,15 @@ void cEditorSpritePanel::Init()
         });
     });
     m_HitBoxFields.push_back(m_HitBoxGrowthKnockBackField->GetOwner());
+    
+    m_HitBoxGuardDropDown = CreateDropDown(Vec2(1920 - 295, 860), Vec2(100, 40), 100, "Mid", false)
+    ->SetDropDownHeight(30)
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[0], [&]()->void{SetHitBoxGuard(Guard::Low);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[1], [&]()->void{SetHitBoxGuard(Guard::Mid);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[2], [&]()->void{SetHitBoxGuard(Guard::High);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[3], [&]()->void{SetHitBoxGuard(Guard::All);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[4], [&]()->void{SetHitBoxGuard(Guard::Unblockable);}, false));
+    m_HitBoxFields.push_back(m_HitBoxGuardDropDown->GetOwner());
 
     m_ThrowBoxCanThrowMidairField = CreateInputField(Vec2(1920 - 85, 700), Vec2(100, 40), "Can Throw Midair", 24, false);
     m_ThrowBoxCanThrowMidairField->SetOnTextChanged([&](cInputField* _this)->void
@@ -696,6 +707,15 @@ bool cEditorSpritePanel::HasFocusedGUI()
     ;
 }
 
+void cEditorSpritePanel::SetHitBoxGuard(Guard _guard)
+{
+    m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+    {
+        ((cHitBox*)_selected.box)->SetGuard(_guard);
+    });
+    m_HitBoxGuardDropDown->SetText(GuardToStringMap[(int)_guard]);
+}
+
 void cEditorSpritePanel::Save(cCharacterData* _data)
 {
 }
@@ -795,6 +815,7 @@ void cEditorSpritePanel::OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::
         m_HitBoxShieldDamageMulField->SetText(std::to_string(box->GetShieldDamageMul()), false);
         m_HitBoxBaseKnockBackField->SetText(std::to_string(box->GetBaseKnockBack()), false);
         m_HitBoxGrowthKnockBackField->SetText(std::to_string(box->GetGrowthKnockBack()), false);
+        m_HitBoxGuardDropDown->SetText(GuardToStringMap[(int)box->GetGuard()]);
     }
     else if (_type == cSpriteBoxArea::ThrowBox)
     {

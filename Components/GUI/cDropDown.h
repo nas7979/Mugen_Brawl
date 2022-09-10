@@ -19,8 +19,10 @@ private:
     bool m_isOpened = false;
     std::vector<cButton*> m_Buttons;
     float m_DropDownWidth = 300;
+    float m_DropDownHeight = 40;
 
 public:
     cDropDown* AddButton(cButton* _button);
     cDropDown* SetDropDownWidth(float _width) {m_DropDownWidth = _width; return this;}
+    cDropDown* SetDropDownHeight(float _height) {m_DropDownHeight = _height; return this;}
 };

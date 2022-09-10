@@ -4,7 +4,7 @@
 #include "SpriteBoxes/cThrowBox.h"
 #include "SpriteBoxes/cBodyBox.h"
 
-enum AttachPointType : byte
+enum class AttachPointType : byte
 {
     Body,
     Head,
@@ -14,7 +14,7 @@ enum AttachPointType : byte
     End
 };
 
-static char* AttachPointTypeToStringMap[6] = 
+static const char* AttachPointTypeToStringMap[6] = 
 {
     "Body",
     "Head",
@@ -28,7 +28,7 @@ struct AttachPoint
 {
     short x = 0;
     short y = 0;
-    AttachPointType type = Body;
+    AttachPointType type = AttachPointType::Body;
 
     Vec2 GetPos() const {return Vec2(x, y);}
     void Deserialize(char* _buffer, UINT& _pointer) {}

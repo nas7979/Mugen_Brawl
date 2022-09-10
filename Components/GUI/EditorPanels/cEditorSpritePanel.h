@@ -57,6 +57,7 @@ private:
     cInputField* m_HitBoxShieldDamageMulField;
     cInputField* m_HitBoxBaseKnockBackField;
     cInputField* m_HitBoxGrowthKnockBackField;
+    cDropDown* m_HitBoxGuardDropDown;
     
     cInputField* m_ThrowBoxCanThrowMidairField;
     
@@ -83,6 +84,7 @@ private:
     
     bool HasFocusedGUI();
     cCharacterSprite* GetCurSprite() {return m_FrameList->GetAnimation()->GetSprite(m_FrameList->GetFrame());}
+    void SetHitBoxGuard(Guard _guard);
 
 public:
     void Save(cCharacterData* _data) override;

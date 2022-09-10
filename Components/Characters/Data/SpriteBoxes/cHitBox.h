@@ -1,6 +1,25 @@
 ﻿#pragma once
 #include "cSpriteBox.h"
 
+enum class Guard : short
+{
+    Low,
+    Mid,
+    High,
+    All,
+    Unblockable,
+    End
+};
+
+static const char* GuardToStringMap[5] = 
+{
+    "Low",
+    "Mid",
+    "High",
+    "All",
+    "Unblockable"
+};
+
 class cHitBox : public cSpriteBox
 {
 public:
@@ -19,6 +38,7 @@ private:
     float m_HitStunMul = 1;
     float m_ShieldDamageMul = 1;
     float m_ShieldStunMul = 1;
+    Guard m_Guard = Guard::Mid;
 
 public:
     void SetDamage(unsigned short _damage) {m_Damage = _damage;}
@@ -35,4 +55,6 @@ public:
     short GetBaseKnockBack() const {return m_BaseKnockBack;}
     void SetGrowthKnockBack(short _knockBack) {m_GrowthKnockBack = _knockBack;}
     short GetGrowthKnockBack() const {return m_GrowthKnockBack;}
+    void SetGuard(Guard _guard) {m_Guard = _guard;}
+    Guard GetGuard() const {return m_Guard;}
 };

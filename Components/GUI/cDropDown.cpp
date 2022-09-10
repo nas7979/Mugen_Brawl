@@ -57,7 +57,7 @@ void cDropDown::OnClickOutSide()
 
 cDropDown* cDropDown::AddButton(cButton* _button)
 {
-    _button->SetSize(Vec2(m_DropDownWidth, 40));
+    _button->SetSize(Vec2(m_DropDownWidth, m_DropDownHeight));
     _button->GetOwner()->SetActive(false);
     
     float yPos = m_Owner->GetPos().y + m_Size.y * 0.5f + _button->GetSize().y * 0.5f;

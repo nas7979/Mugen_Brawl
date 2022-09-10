@@ -56,7 +56,7 @@ void cSpriteBoxArea::Update()
                 SCENE->GetScene<cEditorScene>()->GetSpritePanel()->GetFrameList()->SetFrame(frame);
                 ::AttachPoint** pointer;
                 int count = m_CurSprite->GetAttachPoints(pointer) + 1;
-                if (count > AttachPointType::End)
+                if (count > (int)AttachPointType::End)
                     return;
                 
                 ::AttachPoint** newPointer = new ::AttachPoint*[count];
@@ -66,12 +66,12 @@ void cSpriteBoxArea::Update()
                 ::AttachPoint* attachPoint = new ::AttachPoint();
                 attachPoint->x = pos.x;
                 attachPoint->y = pos.y;
-                for (int type = 0; type < AttachPointType::End; type++)
+                for (int type = 0; type < (int)AttachPointType::End; type++)
                 {
                     bool duplicated = false;
                     for (int i = 0; i < count - 1; i++)
                     {
-                        if (pointer[i]->type != type)
+                        if (pointer[i]->type != (AttachPointType)type)
                             continue;
                         duplicated = true;
                         break;
@@ -500,7 +500,7 @@ void cSpriteBoxArea::Render()
         Vec2 pos = Vec2(EditorSpriteCenterPos.x + attachPoints[i]->x * scale, EditorSpriteCenterPos.y + attachPoints[i]->y * scale);
         IMAGE->RenderSprite(pixel, Vec3(pos.x, pos.y, 0.48f), 0, Vec2(15, 2) * scale, Vec2(0.5f, 0.5f), color, true);
         IMAGE->RenderSprite(pixel, Vec3(pos.x, pos.y, 0.48f), 0, Vec2(2, 15) * scale, Vec2(0.5f, 0.5f), color, true);
-        IMAGE->RenderText("Gothic", AttachPointTypeToStringMap[attachPoints[i]->type], Vec3(pos.x, pos.y + 7 * scale, 0.48f), 0, Vec2(0.25f, 0.25f) * scale, Vec2(0.5f, 0), color, true);
+        IMAGE->RenderText("Gothic", AttachPointTypeToStringMap[(int)attachPoints[i]->type], Vec3(pos.x, pos.y + 7 * scale, 0.48f), 0, Vec2(0.25f, 0.25f) * scale, Vec2(0.5f, 0), color, true);
     }
 }
 

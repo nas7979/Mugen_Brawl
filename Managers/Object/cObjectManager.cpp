@@ -11,13 +11,8 @@ void cObjectManager::Update()
     {
         for (auto iter = m_Objects[tag].begin(); iter != m_Objects[tag].end();)
         {
-            if (!(*iter)->IsActive())
-            {
-                iter++;
-                continue;
-            }
-
-            (*iter)->Update();
+            if ((*iter)->IsActive())
+                (*iter)->Update();
             if ((*iter)->IsDestroyed())
             {
                 (*iter)->Release();

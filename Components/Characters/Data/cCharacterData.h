@@ -36,6 +36,7 @@ public:
     void Deserialize(char* _buffer, UINT& _pointer) override;
     size_t GetSize() const override;
 
+    short GetVersion() const {return m_Version;}
     void SetWeight(float _weight){m_Weight = _weight;}
     float GetWeight() {return m_Weight;}
     void SetSpriteScale(float _scale) {m_SpriteScale = _scale;}

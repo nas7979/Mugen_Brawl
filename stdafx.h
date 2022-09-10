@@ -16,7 +16,7 @@
 #include "GGPO/include/ggponet.h"
 
 #define g_Device DXUTGetD3D9Device()
-#define CURRENT_VERSION 1
+#define CURRENT_VERSION 2
 
 using Vec2 = D3DXVECTOR2;
 using Vec3 = D3DXVECTOR3;
@@ -41,3 +41,6 @@ using namespace Utility;
 #include "Managers/Camera/cCameraManager.h"
 #include "Managers/Input/cInputManager.h"
 #include "Managers/Sound/cSoundManager.h"
+
+#include "Scenes/Editor/cEditorScene.h"
+#define GET_CURRENT_DATA_VERSION SCENE->GetScene<cEditorScene>()->GetCharacterData()->GetVersion()
