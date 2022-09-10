@@ -82,7 +82,6 @@ private:
     void OnClickAddPalette();
     void OnClickRemovePalette();
     
-    bool HasFocusedGUI();
     cCharacterSprite* GetCurSprite() {return m_FrameList->GetAnimation()->GetSprite(m_FrameList->GetFrame());}
     void SetHitBoxGuard(Guard _guard);
 
@@ -93,6 +92,7 @@ public:
     void OnShow() override;
     void OnHide() override;
 
+    bool HasFocusedGUI();
     cFrameList* GetFrameList() {return m_FrameList;}
     cSpriteBoxArea* GetSpriteBoxArea() {return m_SpriteBoxArea;}
     void OnFrameChanged();

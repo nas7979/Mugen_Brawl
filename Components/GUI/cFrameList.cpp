@@ -19,7 +19,7 @@ void cFrameList::Update()
 {
     cGUI::Update();
 
-    if (!CanEdit())
+    if (!CanEdit() || SCENE->GetScene<cEditorScene>()->GetSpritePanel()->HasFocusedGUI())
         return;
 
     if (INPUT->KeyDown(VK_SPACE))

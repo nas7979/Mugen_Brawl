@@ -25,14 +25,14 @@ void cEditorSoundPanel::Init()
     {
         ReloadSoundSetsList();
         m_SoundSetsScrollView->SetSelectedIndex(0);
-        m_SelectedSoundIndex = m_SoundSetsScrollView->GetSelectedIndex();
+        m_SelectedSoundIndex = m_SoundsScrollView->GetSelectedIndex();
     });
     
     m_SoundSetsScrollView = CreateScrollView(Vec2(210, 450), Vec2(400, 500), Vec2(400, 25), [&](cObject* _selected)->void
     {
         m_CurSoundSet = (*m_SoundSets)[_selected->GetComponent<cGUI>()->GetText()];
         m_SoundsScrollView->SetSelectedIndex(0);
-        m_SelectedSoundIndex = m_SoundSetsScrollView->GetSelectedIndex();
+        m_SelectedSoundIndex = m_SoundsScrollView->GetSelectedIndex();
         ReloadSoundsList();
     }, true);
     m_SoundSetsScrollView->SetElementOffset(Vec2(5, 0));

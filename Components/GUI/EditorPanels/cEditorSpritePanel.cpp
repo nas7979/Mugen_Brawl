@@ -126,7 +126,7 @@ void cEditorSpritePanel::Init()
             return;
         m_FrameList->WithSelectedFrames([&](cCharacterSprite* _sprite)->void
         {
-            _sprite->SetMomentum(ShortVec2(_this->GetFloat(), _sprite->GetFriction().y)); 
+            _sprite->SetFriction(Vec2(_this->GetFloat(), _sprite->GetFriction().y)); 
         });
     });
 
@@ -137,7 +137,7 @@ void cEditorSpritePanel::Init()
             return;
         m_FrameList->WithSelectedFrames([&](cCharacterSprite* _sprite)->void
         {
-            _sprite->SetMomentum(ShortVec2(_sprite->GetFriction().x, _this->GetFloat()));
+            _sprite->SetFriction(Vec2(_sprite->GetFriction().x, _this->GetFloat()));
         });
     });
 
@@ -322,10 +322,10 @@ void cEditorSpritePanel::Update()
                 m_OnionSkins[OnionSkin::Custom] = GetCurSprite();
         }
 
-        if (INPUT->KeyDown('<'))
+        if (INPUT->KeyDown(VK_OEM_COMMA))
             m_UsePrevOnionSkin = !m_UsePrevOnionSkin;
 
-        if (INPUT->KeyDown('>'))
+        if (INPUT->KeyDown(VK_OEM_PERIOD))
             m_UseNextOnionSkin = !m_UseNextOnionSkin;
     }
 }
