@@ -387,6 +387,7 @@
   <ItemGroup>
     <ClCompile Include="Components\cComponent.cpp" />
     <ClCompile Include="Components\Characters\cCharacter.cpp" />
+    <ClCompile Include="Components\Characters\cCharacterEventHandler.cpp" />
     <ClCompile Include="Components\Characters\cTestChar.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterAnimation.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterData.cpp" />
@@ -457,6 +458,7 @@
     <ClCompile Include="Components\Characters\Data\SpriteBoxes\cHurtBox.cpp" />
     <ClCompile Include="Components\Characters\Data\SpriteBoxes\cSpriteBox.cpp" />
     <ClCompile Include="Components\Characters\Data\SpriteBoxes\cThrowBox.cpp" />
+    <ClCompile Include="Components\Characters\HitBoxCollider\cHitBoxCollider.cpp" />
     <ClCompile Include="Components\GUI\cButton.cpp" />
     <ClCompile Include="Components\GUI\cDropDown.cpp" />
     <ClCompile Include="Components\GUI\cFrameList.cpp" />
@@ -468,6 +470,7 @@
     <ClCompile Include="Components\GUI\EditorPanels\cEditorPanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSoundPanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSpritePanel.cpp" />
+    <ClCompile Include="Components\Renderer\cRenderer.cpp" />
     <ClCompile Include="Managers\Camera\cCameraManager.cpp" />
     <ClCompile Include="Managers\Input\cInputManager.cpp" />
     <ClCompile Include="Managers\Input\cMsgProcHandler.cpp" />
@@ -477,6 +480,7 @@
     <ClCompile Include="Managers\Sound\SDKsound.cpp" />
     <ClCompile Include="Managers\Sound\SDKwavefile.cpp" />
     <ClCompile Include="Scenes\Editor\cEditorScene.cpp" />
+    <ClCompile Include="Scenes\Ingame\cIngameScene.cpp" />
     <ClCompile Include="Scenes\Loading\cLoadingScene.cpp" />
     <ClCompile Include="Utility\Serialized.cpp" />
     <ClCompile Include="Utility\SerializedString.cpp" />
@@ -543,6 +547,7 @@
     <ClCompile Include="Utility\Utility.cpp" />
     <ClInclude Include="Components\cComponent.h" />
     <ClInclude Include="Components\Characters\cCharacter.h" />
+    <ClInclude Include="Components\Characters\cCharacterEventHandler.h" />
     <ClInclude Include="Components\Characters\cTestChar.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterAnimation.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterData.h" />
@@ -555,6 +560,7 @@
     <ClInclude Include="Components\Characters\Data\SpriteBoxes\cHurtBox.h" />
     <ClInclude Include="Components\Characters\Data\SpriteBoxes\cSpriteBox.h" />
     <ClInclude Include="Components\Characters\Data\SpriteBoxes\cThrowBox.h" />
+    <ClInclude Include="Components\Characters\HitBoxCollider\cHitBoxCollider.h" />
     <ClInclude Include="Components\GUI\cButton.h" />
     <ClInclude Include="Components\GUI\cDropDown.h" />
     <ClInclude Include="Components\GUI\cFrameList.h" />
@@ -566,6 +572,7 @@
     <ClInclude Include="Components\GUI\EditorPanels\cEditorPanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSoundPanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSpritePanel.h" />
+    <ClInclude Include="Components\Renderer\cRenderer.h" />
     <ClInclude Include="GGPO\include\ggponet.h" />
     <ClInclude Include="GGPO\lib\ggpo\backends\backend.h" />
     <ClInclude Include="GGPO\lib\ggpo\backends\p2p.h" />
@@ -602,6 +609,7 @@
     <ClInclude Include="Managers\Sound\SDKsound.h" />
     <ClInclude Include="Managers\Sound\SDKwavefile.h" />
     <ClInclude Include="Scenes\Editor\cEditorScene.h" />
+    <ClInclude Include="Scenes\Ingame\cIngameScene.h" />
     <ClInclude Include="Scenes\Loading\cLoadingScene.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Utility\Serialized.h" />

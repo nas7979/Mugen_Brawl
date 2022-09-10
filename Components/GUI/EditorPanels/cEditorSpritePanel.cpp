@@ -163,8 +163,16 @@ void cEditorSpritePanel::Init()
         });
     });
     
-    m_EventKeyField = CreateInputField(Vec2(EditorSpriteCenterPos.x, 1050), Vec2(800, 40), "Event Key", 24);
-    m_EventKeyField->SetOnTextChanged([&](cInputField* _this)->void
+    m_AnimationEventKeyField = CreateInputField(Vec2(EditorSpriteCenterPos.x, 1005), Vec2(800, 40), "Animation Event Key", 24);
+    m_AnimationEventKeyField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        if (m_FrameList->GetAnimation() == nullptr)
+            return;
+        m_FrameList->GetAnimation()->SetEventKey(_this->GetText());
+    });
+
+    m_SpriteEventKeyField = CreateInputField(Vec2(EditorSpriteCenterPos.x, 1060), Vec2(800, 40), "Event Key", 24);
+    m_SpriteEventKeyField->SetOnTextChanged([&](cInputField* _this)->void
     {
         if (m_FrameList->GetAnimation() == nullptr)
             return;
@@ -174,7 +182,7 @@ void cEditorSpritePanel::Init()
         });
     });
 
-    m_FrameList = OBJECT->AddObject<cFrameList>("FrameList", Vec3(EditorSpriteCenterPos.x, 975, 0.5f), Obj_GUI);
+    m_FrameList = OBJECT->AddObject<cFrameList>("FrameList", Vec3(EditorSpriteCenterPos.x, 950, 0.5f), Obj_GUI);
     m_FrameList->SetSize(Vec2(800, 40));
     m_Objects.push_back(m_FrameList->GetOwner());
 
@@ -182,7 +190,7 @@ void cEditorSpritePanel::Init()
     m_SpriteBoxArea->SetSize(Vec2(1000, 930));
     m_Objects.push_back(m_SpriteBoxArea->GetOwner());
 
-    m_SpriteBoxEventKeyField = CreateInputField(Vec2(1680, 1050), Vec2(450, 40), "Event Key", 20, false);
+    m_SpriteBoxEventKeyField = CreateInputField(Vec2(1680, 1060), Vec2(450, 40), "Event Key", 20, false);
     m_SpriteBoxEventKeyField->SetOnTextChanged([&](cInputField* _this)->void
     {
         m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
@@ -700,10 +708,10 @@ bool cEditorSpritePanel::HasFocusedGUI()
 {
     return m_AnimationsInputField->IsFocused() || m_OffsetXField->IsFocused() || m_OffsetYField->IsFocused() || m_FrameLengthField->IsFocused()
     || m_SpriteScaleField->IsFocused() || m_MomentumXField->IsFocused() || m_MomentumYField->IsFocused() || m_FrictionXField->IsFocused() || m_FrictionYField->IsFocused()
-    || m_EventKeyField->IsFocused() || m_PaletteIndexField->IsFocused() || m_HexColorField->IsFocused() || m_FixedPaletteField->IsFocused() || m_SpriteBoxArea->HasSelectedBox()
+    || m_SpriteEventKeyField->IsFocused() || m_PaletteIndexField->IsFocused() || m_HexColorField->IsFocused() || m_FixedPaletteField->IsFocused() || m_SpriteBoxArea->HasSelectedBox()
     || m_SpriteBoxEventKeyField->IsFocused() || m_HitBoxDamageField->IsFocused() || m_HitBoxDirectionField->IsFocused() || m_HitBoxHitStunMulField->IsFocused()
     || m_HitBoxShieldStunMulField->IsFocused() || m_HitBoxShieldDamageMulField->IsFocused() || m_HitBoxBaseKnockBackField->IsFocused() || m_HitBoxGrowthKnockBackField->IsFocused()
-    || m_ThrowBoxCanThrowMidairField->IsFocused() || m_AnimationsScrollView->GetSelectedIndex() >= 0
+    || m_ThrowBoxCanThrowMidairField->IsFocused() || m_AnimationsScrollView->GetSelectedIndex() >= 0 || m_AnimationEventKeyField->IsFocused()
     ;
 }
 
@@ -740,7 +748,8 @@ void cEditorSpritePanel::Reset()
     m_FrameLengthField->SetText("1");
     m_PaletteIndexField->SetText("0");
     m_FixedPaletteField->SetText("0");
-    m_EventKeyField->SetText("");
+    m_SpriteEventKeyField->SetText("");
+    m_AnimationEventKeyField->SetText("");
 
     m_SpriteScaleField->SetText(std::to_string(SCENE->GetScene<cEditorScene>()->GetCharacterData()->GetSpriteScale()));
 
@@ -777,7 +786,8 @@ void cEditorSpritePanel::OnFrameChanged()
     m_FrictionYField->SetText(std::to_string(sprite->GetFriction().y), false);
     m_FrameLengthField->SetText(std::to_string(sprite->GetFrameLength()), false);
     m_FixedPaletteField->SetText(std::to_string(sprite->GetFixedPaletteIndex()), false);
-    m_EventKeyField->SetText(sprite->GetEventKey(), false);
+    m_SpriteEventKeyField->SetText(sprite->GetEventKey(), false);
+    m_AnimationEventKeyField->SetText(m_FrameList->GetAnimation()->GetEventKey());
 
     int curFrame = m_FrameList->GetFrame();
     int frameLength = m_FrameList->GetAnimation()->GetLength();

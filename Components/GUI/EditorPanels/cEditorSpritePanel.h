@@ -41,7 +41,8 @@ private:
     cInputField* m_MomentumYField;
     cInputField* m_FrictionXField;
     cInputField* m_FrictionYField;
-    cInputField* m_EventKeyField;
+    cInputField* m_AnimationEventKeyField;
+    cInputField* m_SpriteEventKeyField;
     cInputField* m_PaletteIndexField;
     cInputField* m_FixedPaletteField;
     cInputField* m_HexColorField;

@@ -2,6 +2,20 @@
 #include "cMsgProcHandler.h"
 #include "../../Components/GUI/cGUI.h"
 
+enum class IngameInput
+{
+    Up,
+    Left,
+    Down,
+    Right,
+    A,
+    B,
+    C,
+    Shield,
+    Cancel,
+    End
+};
+
 class cInputManager : public cSingleton<cInputManager>
 {
     struct Action
@@ -30,6 +44,8 @@ private:
     std::list<Action> m_UndoQueue;
     std::list<Action> m_RedoQueue;
     const int m_DoQueueMaxCount = 100;
+    short m_GameInput = 0;
+    char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G'};
 
 public:
     bool KeyDown(int _key) {return m_CurKeys[_key] && !m_OldKeys[_key];}
@@ -47,6 +63,7 @@ public:
     void ClearDoQueue();
     
     void ReadAndClearInputBuffer();
+    short GetGameInput() const {return m_GameInput;}
 };
 
 #define INPUT cInputManager::GetInstance()

@@ -17,6 +17,7 @@
 
 #define g_Device DXUTGetD3D9Device()
 #define CURRENT_VERSION 2
+#define MAX_PLAYER 8
 
 using Vec2 = D3DXVECTOR2;
 using Vec3 = D3DXVECTOR3;

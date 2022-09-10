@@ -26,6 +26,12 @@ void cInputManager::Update()
             m_InputBufferClearTimer = INPUT_BUFFER_CLEAR_DELAY;
         }
     }
+
+    m_GameInput = 0;
+    for (int i = 0; i < (int)IngameInput::End; i++)
+    {
+        m_GameInput |= m_CurKeys[m_GameInputBindings[i]] << i; 
+    }
     
     POINT pt;
     GetCursorPos(&pt);
