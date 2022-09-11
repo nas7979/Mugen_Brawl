@@ -17,37 +17,64 @@ void cCharacter::Update()
 {
     if (m_State == State::Idle)
     {
-        if (INPUT->CheckGameInput(IngameInput::Left))
+        if (!HasFlag(Flag::Crouching))
         {
-            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
-                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+            if (INPUT->CheckGameInput(IngameInput::Left))
+            {
+                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                    SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
             
-            Vec3 pos = m_Owner->GetPos();
-            pos.x -= (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-            m_Owner->SetPos(pos);
+                Vec3 pos = m_Owner->GetPos();
+                pos.x -= (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+                m_Owner->SetPos(pos);
             
-            SetDirection(-1);
+                SetDirection(-1);
+            }
+
+            if (INPUT->CheckGameInput(IngameInput::Right))
+            {
+                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                    SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+            
+                Vec3 pos = m_Owner->GetPos();
+                pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+                m_Owner->SetPos(pos);
+            
+                SetDirection(1);
+            }
         }
 
-        if (INPUT->CheckGameInput(IngameInput::Right))
+        if (!HasFlag(Flag::InAir))
         {
-            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
-                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
-            
-            Vec3 pos = m_Owner->GetPos();
-            pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-            m_Owner->SetPos(pos);
-            
-            SetDirection(1);
+            if (INPUT->CheckGameInput(IngameInput::Down))
+            {
+                RemoveFlag(Flag::Standing);
+                AddFlag(Flag::Crouching);
+
+                if (!CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart"))
+                {
+                    SetAnimation("CrouchStart");
+                }
+            }
+            else
+            {
+                RemoveFlag(Flag::Crouching);
+                AddFlag(Flag::Standing);
+
+                if (CheckCurAnimation("Crouch"))
+                {
+                    SetAnimation("CrouchEnd");
+                }
+            }
         }
 
         if (INPUT->GetGameInput() == 0)
         {
-            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle"))
+            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd"))
             {
                 SetAnimation("Idle");
             }
-            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch"))
+            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart"))
             {
                 SetAnimation("Crouch");
             }
@@ -77,6 +104,19 @@ void cCharacter::OnAlarm(std::string _key)
 
 void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
 {
+    std::string key = _anim->GetKey();
+    
+    if (key == "CrouchStart")
+    {
+        SetAnimation("Crouch");
+        return;
+    }
+
+    if (key == "CrouchEnd")
+    {
+        SetAnimation("Idle");
+        return;
+    }
 }
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)

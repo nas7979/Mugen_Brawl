@@ -82,5 +82,7 @@ public:
     void Reset();
 
     bool HasFlag(Flag _flag) const {return (m_Flag & (int)_flag) != 0;}
+    bool AddFlag(Flag _flag) {return m_Flag |= (int)_flag;}
+    bool RemoveFlag(Flag _flag) {return m_Flag &= ~(int)_flag;}
     void SetDirection(int _dir);
 };
