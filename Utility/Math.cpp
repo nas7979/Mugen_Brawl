@@ -27,3 +27,12 @@ float Math::Distance(Vec2 _a, Vec2 _b)
     return sqrt(pow.x * pow.x + pow.y + pow.y);
 }
 
+float Math::Sign(float _value)
+{
+    if (_value > 0)
+        return 1;
+    if (_value < 0)
+        return -1;
+    return 0;
+}
+

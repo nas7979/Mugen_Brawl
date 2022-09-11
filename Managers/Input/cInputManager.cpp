@@ -30,7 +30,15 @@ void cInputManager::Update()
     m_GameInput = 0;
     for (int i = 0; i < 16; i++)
     {
-        m_GameInput |= m_CurKeys[m_GameInputBindings[i]] << i; 
+        if (m_CurKeys[m_GameInputBindings[i]])
+        {
+            m_GameInputPressTimer[i]++;
+            m_GameInput |= 1 << i; 
+        }
+        else
+        {
+            m_GameInputPressTimer[i] = 0;
+        }
     }
     
     POINT pt;

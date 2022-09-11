@@ -4,15 +4,15 @@
 
 enum class IngameInput
 {
-    Up = 0x0001,
-    Left = 0x0002,
-    Down = 0x0004,
-    Right = 0x0008,
-    A = 0x0010,
-    B = 0x0020,
-    C = 0x0040,
-    Shield = 0x0080,
-    Cancel = 0x0100
+    Up,
+    Left,
+    Down,
+    Right,
+    A,
+    B,
+    C,
+    Shield,
+    Cancel
 };
 
 class cInputManager : public cSingleton<cInputManager>
@@ -45,6 +45,7 @@ private:
     const int m_DoQueueMaxCount = 100;
     short m_GameInput = 0;
     char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
+    short m_GameInputPressTimer[16] {0, };
 
 public:
     bool KeyDown(int _key) const {return m_CurKeys[_key] && !m_OldKeys[_key];}
@@ -63,7 +64,8 @@ public:
     
     void ReadAndClearInputBuffer();
     short GetGameInput() const {return m_GameInput;}
-    bool CheckGameInput(IngameInput _input) const {return (m_GameInput & (short)_input) != 0;}
+    bool CheckGameInput(IngameInput _input) const {return (m_GameInput & 1 << (short)_input) != 0;}
+    short GetGameInputPressTimer(IngameInput _input) const {return m_GameInputPressTimer[(short)_input];}
 };
 
 #define INPUT cInputManager::GetInstance()
