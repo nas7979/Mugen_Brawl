@@ -17,29 +17,50 @@ void cCharacter::Update()
 {
     if (m_State == State::Idle)
     {
-        if (!HasFlag(Flag::Crouching))
+        bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right);
+        bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left);
+
+        if (isRightPressed && isLeftPressed)
         {
-            if (INPUT->CheckGameInput(IngameInput::Left))
+            if (INPUT->GetGameInputPressTimer(IngameInput::Right) > INPUT->GetGameInputPressTimer(IngameInput::Left))
+                isRightPressed = false;
+            else
+                isLeftPressed = false;
+        }
+        
+        if (HasFlag(Flag::Standing))
+        {
+            if (isLeftPressed)
             {
-                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                SetDirection(-1);
+                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
                     SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
             
                 Vec3 pos = m_Owner->GetPos();
                 pos.x -= (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
                 m_Owner->SetPos(pos);
-            
-                SetDirection(-1);
             }
 
-            if (INPUT->CheckGameInput(IngameInput::Right))
+            if (isRightPressed)
             {
-                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                SetDirection(1);
+                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
                     SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
-            
+                
                 Vec3 pos = m_Owner->GetPos();
                 pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
                 m_Owner->SetPos(pos);
-            
+            }
+        }
+        else if (HasFlag(Flag::Crouching))
+        {
+            if (isLeftPressed)
+            {
+                SetDirection(-1);
+            }
+
+            if (isRightPressed)
+            {
                 SetDirection(1);
             }
         }
@@ -51,7 +72,7 @@ void cCharacter::Update()
                 RemoveFlag(Flag::Standing);
                 AddFlag(Flag::Crouching);
 
-                if (!CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart"))
+                if (!CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
                 {
                     SetAnimation("CrouchStart");
                 }
@@ -70,11 +91,11 @@ void cCharacter::Update()
 
         if (INPUT->GetGameInput() == 0)
         {
-            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd"))
+            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd") && !CheckCurAnimation("TurnStand"))
             {
                 SetAnimation("Idle");
             }
-            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart"))
+            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
             {
                 SetAnimation("Crouch");
             }
@@ -106,13 +127,13 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
 {
     std::string key = _anim->GetKey();
     
-    if (key == "CrouchStart")
+    if (key == "CrouchStart" || key == "TurnCrouch")
     {
         SetAnimation("Crouch");
         return;
     }
 
-    if (key == "CrouchEnd")
+    if (key == "CrouchEnd" || key == "TurnStand")
     {
         SetAnimation("Idle");
         return;
@@ -202,5 +223,13 @@ void cCharacter::Reset()
 
 void cCharacter::SetDirection(int _dir)
 {
+    int prevDir = Sign(m_Owner->GetScale().x);
     m_Owner->SetScale(Vec2(_dir, 1) * m_Data->GetSpriteScale());
+    if (m_State == State::Idle && prevDir != _dir)
+    {
+        if (HasFlag(Flag::Standing) && (CheckCurAnimation("Idle") || CheckCurAnimation("Walk")))
+            SetAnimation("TurnStand");
+        else if (HasFlag(Flag::Crouching) && CheckCurAnimation("Crouch"))
+            SetAnimation("TurnCrouch");
+    }
 }
