@@ -28,7 +28,7 @@ void cInputManager::Update()
     }
 
     m_GameInput = 0;
-    for (int i = 0; i < (int)IngameInput::End; i++)
+    for (int i = 0; i < 16; i++)
     {
         m_GameInput |= m_CurKeys[m_GameInputBindings[i]] << i; 
     }

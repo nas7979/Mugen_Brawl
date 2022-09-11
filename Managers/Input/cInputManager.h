@@ -4,16 +4,15 @@
 
 enum class IngameInput
 {
-    Up,
-    Left,
-    Down,
-    Right,
-    A,
-    B,
-    C,
-    Shield,
-    Cancel,
-    End
+    Up = 0x0001,
+    Left = 0x0002,
+    Down = 0x0004,
+    Right = 0x0008,
+    A = 0x0010,
+    B = 0x0020,
+    C = 0x0040,
+    Shield = 0x0080,
+    Cancel = 0x0100
 };
 
 class cInputManager : public cSingleton<cInputManager>
@@ -45,13 +44,13 @@ private:
     std::list<Action> m_RedoQueue;
     const int m_DoQueueMaxCount = 100;
     short m_GameInput = 0;
-    char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G'};
+    char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
 
 public:
-    bool KeyDown(int _key) {return m_CurKeys[_key] && !m_OldKeys[_key];}
-    bool KeyPress(int _key) {return m_CurKeys[_key] || m_OldKeys[_key];}
-    bool KeyUp(int _key) {return !m_CurKeys[_key] && m_OldKeys[_key];}
-    Vec2 GetMousePos() {return m_MousePos;}
+    bool KeyDown(int _key) const {return m_CurKeys[_key] && !m_OldKeys[_key];}
+    bool KeyPress(int _key) const {return m_CurKeys[_key] || m_OldKeys[_key];}
+    bool KeyUp(int _key) const {return !m_CurKeys[_key] && m_OldKeys[_key];}
+    Vec2 GetMousePos() const {return m_MousePos;}
     std::string GetWindowInputBuffer() {return m_WindowInputBuffer;}
     void SubscribeMsgProcHandler(cMsgProcHandler* _handler) {m_MsgProcHandlers.push_back(_handler);}
     void UnsubscribeMsgProcHandler(cMsgProcHandler* _handler);
@@ -64,6 +63,7 @@ public:
     
     void ReadAndClearInputBuffer();
     short GetGameInput() const {return m_GameInput;}
+    bool CheckGameInput(IngameInput _input) const {return (m_GameInput & (short)_input) != 0;}
 };
 
 #define INPUT cInputManager::GetInstance()

@@ -22,9 +22,9 @@ private:
     short m_WalkSpeed = 200;
     short m_DashSpeed = 500;
     short m_AirSpeed = 200;
-    short m_PreJump = 3;
+    short m_AirMovementLimit = 2;
     short m_ShieldSize = 125;
-    short m_ShieldDecSpeed = 20;
+    short m_ShieldDecSpeed = 10;
     
     SerializedString m_Name;
     std::map<SerializedString, cCharacterAnimation*> m_Animations;
@@ -43,6 +43,27 @@ public:
     float GetSpriteScale() {return m_SpriteScale;}
     void SetName(const std::string& _name) {m_Name = _name;}
     std::string GetName() {return m_Name;}
+
+    short GetWeight() const {return m_Weight;}
+    void SetWeight(short _weight) {m_Weight = _weight;}
+    short GetJumpHeight() const {return m_JumpHeight;}
+    void SetJumpHeight(short _height) {m_JumpHeight = _height;}
+    short GetFallSpeed() const {return m_FallSpeed;}
+    void SetFallSpeed(short _speed) {m_FallSpeed = _speed;}
+    short GetFastFallSpeed() const {return m_FastFallSpeed;}
+    void SetFastFallSpeed(short _speed) {m_FastFallSpeed = _speed;}
+    short GetWalkSpeed() const {return m_WalkSpeed;}
+    void SetWalkSpeed(short _speed) {m_WalkSpeed = _speed;}
+    short GetDashSpeed() const {return m_DashSpeed;}
+    void SetDashSpeed(short _speed) {m_DashSpeed = _speed;}
+    short GetAirSpeed() const {return m_AirSpeed;}
+    void SetAirSpeed(short _speed) {m_AirSpeed = _speed;}
+    short GetAirMovementLimit() const {return m_AirMovementLimit;}
+    void SetAirMovementLimit(short _limit) {m_AirMovementLimit = _limit;}
+    short GetShieldSize() const {return m_ShieldSize;}
+    void SetShieldSize(short _size) {m_ShieldSize = _size;}
+    short GetShieldDecSpeed() const {return m_ShieldDecSpeed;}
+    void SetShieldDecSpeed(short _speed) {m_ShieldDecSpeed = _speed;}
     
     cCharacterAnimation* AddAnimation(std::string _key);
     void RemoveAnimation(std::string _key);

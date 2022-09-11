@@ -22,8 +22,9 @@ void cRenderer::Render()
         m_ShaderBeginFunc();
     
     Vec3 pos = m_Owner->GetPos();
-    pos.x += m_Offset.x;
-    pos.y += m_Offset.y;
+    Vec2 scale = m_Owner->GetScale();
+    pos.x += m_Offset.x * scale.x;
+    pos.y += m_Offset.y * scale.y;
     IMAGE->RenderSprite(m_Texture, pos, m_Owner->GetRot(), m_Owner->GetScale(), m_Pivot, m_Color);
 
     if (m_ShaderEndFunc != nullptr)

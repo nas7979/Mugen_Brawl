@@ -15,6 +15,48 @@ void cCharacter::Init()
 
 void cCharacter::Update()
 {
+    if (m_State == State::Idle)
+    {
+        if (INPUT->CheckGameInput(IngameInput::Left))
+        {
+            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+            
+            Vec3 pos = m_Owner->GetPos();
+            pos.x -= (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+            m_Owner->SetPos(pos);
+            
+            SetDirection(-1);
+        }
+
+        if (INPUT->CheckGameInput(IngameInput::Right))
+        {
+            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")))
+                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+            
+            Vec3 pos = m_Owner->GetPos();
+            pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+            m_Owner->SetPos(pos);
+            
+            SetDirection(1);
+        }
+
+        if (INPUT->GetGameInput() == 0)
+        {
+            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle"))
+            {
+                SetAnimation("Idle");
+            }
+            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch"))
+            {
+                SetAnimation("Crouch");
+            }
+            else if (HasFlag(Flag::InAir) && !CheckCurAnimation("Jump"))
+            {
+                SetAnimation("Jump");
+            }
+        }
+    }
 }
 
 void cCharacter::Render()
@@ -45,7 +87,7 @@ void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHit
 {
 }
 
-void cCharacter::OnThrew(cCharacter* _by, cBodyBox* _myBodyBox, cThrowBox* _enemyThrowBox, RECT _overlappedRect)
+void cCharacter::OnThrown(cCharacter* _by, cBodyBox* _myBodyBox, cThrowBox* _enemyThrowBox, RECT _overlappedRect)
 {
 }
 
@@ -112,7 +154,13 @@ void cCharacter::SetPalette(int _index)
 void cCharacter::Reset()
 {
     m_Flag = 0;
+    m_State = State::Idle;
     m_Damage = 0;
     m_Friction = Vec2(1, 1);
     m_Velocity = Vec2(0, 0);
+}
+
+void cCharacter::SetDirection(int _dir)
+{
+    m_Owner->SetScale(Vec2(_dir, 1) * m_Data->GetSpriteScale());
 }

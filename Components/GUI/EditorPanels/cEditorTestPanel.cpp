@@ -56,6 +56,7 @@ void cEditorTestPanel::OnShow()
     m_Character = OBJECT->AddObject<cCharacter>(m_Data->GetName(), Vec3(0,0, 0.5f), Obj_Character);
     m_Character->SetData(m_Data);
     m_Character->SetPalette(0);
+    m_Character->SetDirection(1);
 }
 
 void cEditorTestPanel::OnHide()
