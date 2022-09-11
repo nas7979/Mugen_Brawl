@@ -34,7 +34,7 @@ struct AttachPoint
     void Deserialize(char* _buffer, UINT& _pointer) {}
 };
 
-class cCharacterSprite : Serializer
+class cCharacterSprite : public Serializer, public cEventKey
 {
 public:
     cCharacterSprite() = default;
@@ -53,7 +53,6 @@ private:
     DynamicSerializedArray<cHurtBox*> m_HurtBoxes;
     DynamicSerializedArray<cBodyBox*> m_BodyBoxes;
     SerializedString m_ImageBinary;
-    SerializedString m_EventKey;
 
     Texture* m_Texture = nullptr;
 
@@ -88,7 +87,4 @@ public:
     void SetHurtBoxes(cHurtBox** _pointer, int _length) {m_HurtBoxes.SetValue(_pointer, _length);}
     int GetBodyBoxes(cBodyBox**& _pointer) {_pointer = m_BodyBoxes.GetValue(); return m_BodyBoxes.GetLength();}
     void SetBodyBoxes(cBodyBox** _pointer, int _length) {m_BodyBoxes.SetValue(_pointer, _length);}
-
-    std::string GetEventKey() {return m_EventKey;}
-    void SetEventKey(std::string _key) {m_EventKey = _key;}
 };

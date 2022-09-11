@@ -1,5 +1,9 @@
 ﻿#pragma once
 
+class cBodyBox;
+class cHurtBox;
+class cThrowBox;
+class cHitBox;
 class cCharacter;
 
 class cCharacterEventHandler

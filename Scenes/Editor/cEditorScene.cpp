@@ -6,6 +6,7 @@
 #include "../../Components/GUI/cScrollView.h"
 #include "../../Components/GUI/EditorPanels/cEditorCharacterPanel.h"
 #include "../../Components/GUI/EditorPanels/cEditorSpritePanel.h"
+#include "../../Components/GUI/EditorPanels/cEditorTestPanel.h"
 
 cEditorScene::~cEditorScene()
 {
@@ -44,6 +45,7 @@ void cEditorScene::InitGUIs()
     m_Panels[Panel_Character] = OBJECT->AddObject<cEditorCharacterPanel>("CharacterPanel", Vec3(0,0,0), Obj_GUI);
     m_Panels[Panel_Sprite] = OBJECT->AddObject<cEditorSpritePanel>("SpritePanel", Vec3(0,0,0), Obj_GUI);
     m_Panels[Panel_Sound] = OBJECT->AddObject<cEditorSoundPanel>("SoundPanel", Vec3(0,0,0), Obj_GUI);
+    m_Panels[Panel_Test] = OBJECT->AddObject<cEditorTestPanel>("TestPanel", Vec3(0,0,0), Obj_GUI);
     
     CreateDropDown(Vec2(40, 15), Vec2(80, 30), 200, "파일")
     ->AddButton(CreateButton(Vec2(0,0),Vec2(0,0),"새 캐릭터", [&]()->void{OnClickNewCharacter();}))
@@ -54,6 +56,7 @@ void cEditorScene::InitGUIs()
     CreateButton(Vec2(40, 45), Vec2(80, 30), "캐릭터", [&]()->void{ChangePanel(Panel_Character);});
     CreateButton(Vec2(120, 45), Vec2(80, 30), "스프라이트", [&]()->void{ChangePanel(Panel_Sprite);});
     CreateButton(Vec2(200, 45), Vec2(80, 30), "사운드", [&]()->void{ChangePanel(Panel_Sound);});
+    CreateButton(Vec2(280, 45), Vec2(80, 30), "테스트", [&]()->void{ChangePanel(Panel_Test);});
 
     ChangePanel(Panel_Character);
     ReloadGUIs();

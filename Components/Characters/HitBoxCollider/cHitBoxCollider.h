@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "../cCharacter.h"
 
+class cCharacterSprite;
+
 class cHitBoxCollider : public cComponent
 {
 public:

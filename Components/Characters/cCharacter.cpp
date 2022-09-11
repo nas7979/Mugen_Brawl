@@ -3,6 +3,14 @@
 
 void cCharacter::Init()
 {
+    if (m_Data == nullptr)
+        return;
+
+    Reset();
+
+    m_AnimPlayer = AddComponent<cCharacterAnimationPlayer>();
+
+    m_AnimPlayer->SetAnimation(m_Data->GetAnimation("Idle"));
 }
 
 void cCharacter::Update()
@@ -22,6 +30,10 @@ void cCharacter::OnCollision(cObject* _other)
 }
 
 void cCharacter::OnAlarm(std::string _key)
+{
+}
+
+void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
 {
 }
 
@@ -84,4 +96,23 @@ void cCharacter::Deserialize(char* _buffer, UINT& _pointer)
 size_t cCharacter::GetSize() const
 {
     return 0;
+}
+
+void cCharacter::SetData(cCharacterData* _data)
+{
+    m_Data = _data;
+    Init();
+}
+
+void cCharacter::SetPalette(int _index)
+{
+    m_AnimPlayer->SetPalette(m_Data->GetPalette(_index));
+}
+
+void cCharacter::Reset()
+{
+    m_Flag = 0;
+    m_Damage = 0;
+    m_Friction = Vec2(1, 1);
+    m_Velocity = Vec2(0, 0);
 }

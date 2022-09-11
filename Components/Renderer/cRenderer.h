@@ -3,6 +3,7 @@
 class cRenderer : public cComponent
 {
 public:
+    cRenderer(cObject* _owner) : cComponent(_owner) {}
     ~cRenderer() override;
     void Init() override;
     void Update() override;

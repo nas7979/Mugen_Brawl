@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-class cSpriteBox : public Serializer
+class cSpriteBox : public Serializer, public cEventKey
 {
 public:
     cSpriteBox() = default;
@@ -12,7 +12,6 @@ public:
 
 private:
     short m_Left, m_Top, m_Right, m_Bottom;
-    SerializedString m_EventKey;
 
 public:
     void SetRect(short _left, short _top, short _right, short _bottom)
@@ -33,7 +32,4 @@ public:
     void SetRight(short _right) {m_Right = _right;}
     short GetBottom() const {return  m_Bottom;}
     void SetBottom(short _bottom) {m_Bottom = _bottom;}
-
-    std::string GetEventKey() {return m_EventKey;}
-    void SetEventKey(const std::string& _key) {m_EventKey = _key;}
 };

@@ -18,6 +18,7 @@ enum Panel
     Panel_Character,
     Panel_Sprite,
     Panel_Sound,
+    Panel_Test,
     Panel_End
 };
     

@@ -17,6 +17,7 @@ public:
     void Deserialize(char* _buffer, UINT& _pointer) override;
     const char* GetBuffer() const {return m_String.data();}
     size_t GetLength() const {return m_String.size();}
+    std::string& GetString() const {return const_cast<std::string&>(m_String);}
 
     operator std::string() const {return m_String;}
     bool operator < (const SerializedString& _right) const {return m_String < _right.m_String;}

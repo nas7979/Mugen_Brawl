@@ -388,6 +388,7 @@
     <ClCompile Include="Components\cComponent.cpp" />
     <ClCompile Include="Components\Characters\cCharacter.cpp" />
     <ClCompile Include="Components\Characters\cCharacterEventHandler.cpp" />
+    <ClCompile Include="Components\Characters\CharacterAnimationPlayer\cCharacterAnimationPlayer.cpp" />
     <ClCompile Include="Components\Characters\cTestChar.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterAnimation.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterData.cpp" />
@@ -450,6 +451,7 @@
       <AdditionalOptions> </AdditionalOptions>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="Components\Characters\Data\cEventKey.cpp" />
     <ClCompile Include="Components\Characters\Data\cPalette.cpp" />
     <ClCompile Include="Components\Characters\Data\cSound.cpp" />
     <ClCompile Include="Components\Characters\Data\cSoundSet.cpp" />
@@ -470,6 +472,7 @@
     <ClCompile Include="Components\GUI\EditorPanels\cEditorPanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSoundPanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSpritePanel.cpp" />
+    <ClCompile Include="Components\GUI\EditorPanels\cEditorTestPanel.cpp" />
     <ClCompile Include="Components\Renderer\cRenderer.cpp" />
     <ClCompile Include="Managers\Camera\cCameraManager.cpp" />
     <ClCompile Include="Managers\Input\cInputManager.cpp" />
@@ -548,10 +551,12 @@
     <ClInclude Include="Components\cComponent.h" />
     <ClInclude Include="Components\Characters\cCharacter.h" />
     <ClInclude Include="Components\Characters\cCharacterEventHandler.h" />
+    <ClInclude Include="Components\Characters\CharacterAnimationPlayer\cCharacterAnimationPlayer.h" />
     <ClInclude Include="Components\Characters\cTestChar.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterAnimation.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterData.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterSprite.h" />
+    <ClInclude Include="Components\Characters\Data\cEventKey.h" />
     <ClInclude Include="Components\Characters\Data\cPalette.h" />
     <ClInclude Include="Components\Characters\Data\cSound.h" />
     <ClInclude Include="Components\Characters\Data\cSoundSet.h" />
@@ -572,6 +577,7 @@
     <ClInclude Include="Components\GUI\EditorPanels\cEditorPanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSoundPanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSpritePanel.h" />
+    <ClInclude Include="Components\GUI\EditorPanels\cEditorTestPanel.h" />
     <ClInclude Include="Components\Renderer\cRenderer.h" />
     <ClInclude Include="GGPO\include\ggponet.h" />
     <ClInclude Include="GGPO\lib\ggpo\backends\backend.h" />

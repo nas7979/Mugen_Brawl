@@ -1,15 +1,22 @@
 ﻿#pragma once
 #include "cCharacterEventHandler.h"
+#include "CharacterAnimationPlayer/cCharacterAnimationPlayer.h"
+
+class cCharacterAnimation;
+class cCharacterData;
 
 class cCharacter : public cComponent, Serializer, cCharacterEventHandler
 {
 public:
+    cCharacter(cObject* _owner) : cComponent(_owner) {}
+    virtual ~cCharacter() = default;
     void Init() override;
     void Update() override;
     void Render() override;
     void Release() override;
     void OnCollision(cObject* _other) override;
     void OnAlarm(std::string _key) override;
+    virtual void OnAnimationEnd(cCharacterAnimation* _anim);
 
     void OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect) override;
     void OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect) override;
@@ -30,8 +37,16 @@ public:
     size_t GetSize() const override;
 
 private:
-    cCharacterData* m_Data;
+    cCharacterData* m_Data = nullptr;
     int m_Flag;
     Vec2 m_Velocity;
     Vec2 m_Friction;
+    float m_Damage;
+
+    cCharacterAnimationPlayer* m_AnimPlayer;
+
+public:
+    void SetData(cCharacterData* _data);
+    void SetPalette(int _index);
+    void Reset();
 };
