@@ -104,6 +104,16 @@ void cCharacter::Update()
                 SetAnimation("Jump");
             }
         }
+
+        for (auto& command : m_Data->GetCommands())
+        {
+            if (INPUT->CheckInputBuffer(command, this))
+            {
+                m_State = State::Action;
+                SetAnimation(command);
+                break;
+            }
+        }
     }
 }
 
@@ -138,6 +148,8 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
         SetAnimation("Idle");
         return;
     }
+
+    m_State = State::Idle;
 }
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)

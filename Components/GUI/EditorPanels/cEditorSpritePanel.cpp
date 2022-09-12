@@ -773,9 +773,11 @@ void cEditorSpritePanel::OnHide()
 
 void cEditorSpritePanel::OnFrameChanged()
 {
+    m_SpriteBoxArea->SetSprite(nullptr);
+
     if (!m_FrameList->CanEdit())
         return;
-    
+
     cCharacterSprite* sprite = GetCurSprite();
     m_SpriteBoxArea->SetSprite(sprite);
     m_OffsetXField->SetText(std::to_string(sprite->GetOffset().x), false);

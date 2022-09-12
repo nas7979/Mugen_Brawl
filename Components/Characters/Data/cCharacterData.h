@@ -31,6 +31,8 @@ private:
     DynamicSerializedVector<cPalette*> m_Palettes;
     std::map<SerializedString, cSoundSet*> m_SoundSets;
 
+    std::vector<std::string> m_Commands;
+
 public:
     void Serialize(char* _buffer, UINT& _pointer) const override;
     void Deserialize(char* _buffer, UINT& _pointer) override;
@@ -82,6 +84,8 @@ public:
     void RemoveSoundSet(std::string _key);
     cSoundSet* GetSoundSet(std::string _key);
     std::map<SerializedString, cSoundSet*>* GetSoundSets() {return &m_SoundSets;}
+
+    std::vector<std::string>& GetCommands() const {return const_cast<std::vector<std::string>&>(m_Commands);}
 };
 
 #define FIXED_PALETTE_INDEX 1000

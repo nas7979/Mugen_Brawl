@@ -2,6 +2,8 @@
 #include "cMsgProcHandler.h"
 #include "../../Components/GUI/cGUI.h"
 
+class cCharacter;
+
 enum class IngameInput
 {
     Up,
@@ -36,7 +38,7 @@ private:
     Vec2 m_MousePos;
     std::string m_InputBuffer;
     int m_InputBufferClearTimer = 0;
-    const int INPUT_BUFFER_CLEAR_DELAY = 6;
+    const int INPUT_BUFFER_CLEAR_DELAY = 10;
     std::string m_WindowInputBuffer;
     std::vector<cMsgProcHandler*> m_MsgProcHandlers;
     std::vector<cGUI*> m_ClickedGUIs;
@@ -45,6 +47,7 @@ private:
     const int m_DoQueueMaxCount = 100;
     short m_GameInput = 0;
     char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
+    char m_GameInputToNotations[16] {'8', '4', '2', '6', 'a', 'b', 'c', 'd', 'r', };
     short m_GameInputPressTimer[16] {0, };
 
 public:
@@ -62,7 +65,8 @@ public:
     void Do(const std::function<void()>& _do, const std::function<void()>& _undo);
     void ClearDoQueue();
     
-    void ReadAndClearInputBuffer();
+    void ClearInputBuffer();
+    bool CheckInputBuffer(const std::string& _command, cCharacter* _character) const;
     short GetGameInput() const {return m_GameInput;}
     bool CheckGameInput(IngameInput _input) const {return (m_GameInput & 1 << (short)_input) != 0;}
     short GetGameInputPressTimer(IngameInput _input) const {return m_GameInputPressTimer[(short)_input];}

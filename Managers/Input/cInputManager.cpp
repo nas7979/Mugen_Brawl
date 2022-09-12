@@ -11,7 +11,7 @@ void cInputManager::Update()
         return;
     
     m_InputBufferClearTimer--;
-    if (m_InputBufferClearTimer >= 0)
+    if (m_InputBufferClearTimer <= 0)
         m_InputBuffer.clear();
     
     memcpy(m_OldKeys, m_CurKeys, sizeof(m_CurKeys));
@@ -22,8 +22,6 @@ void cInputManager::Update()
         if (GetAsyncKeyState(i) & 0x8000)
         {
             m_CurKeys[i] = true;
-            m_InputBuffer.push_back(i);
-            m_InputBufferClearTimer = INPUT_BUFFER_CLEAR_DELAY;
         }
     }
 
@@ -33,7 +31,13 @@ void cInputManager::Update()
         if (m_CurKeys[m_GameInputBindings[i]])
         {
             m_GameInputPressTimer[i]++;
-            m_GameInput |= 1 << i; 
+            m_GameInput |= 1 << i;
+
+            if (!m_OldKeys[m_GameInputBindings[i]])
+            {
+                m_InputBuffer.push_back(m_GameInputToNotations[i]);
+                m_InputBufferClearTimer = INPUT_BUFFER_CLEAR_DELAY;
+            }
         }
         else
         {
@@ -172,11 +176,30 @@ void cInputManager::ClearDoQueue()
     m_RedoQueue.clear();
 }
 
-void cInputManager::ReadAndClearInputBuffer()
+void cInputManager::ClearInputBuffer()
 {
-    for (auto iter : m_InputBuffer)
-    {
-        m_CurKeys[iter] = true;
-    }
     m_InputBuffer.clear();
+}
+
+bool cInputManager::CheckInputBuffer(const std::string& _command, cCharacter* _character) const
+{
+    std::string dirNormalizedInputs = m_InputBuffer;
+    for (int i = 0; i < dirNormalizedInputs.size(); i++)
+    {
+        if (dirNormalizedInputs[i] == '4')
+            dirNormalizedInputs[i] = '6';
+    }
+
+    size_t hasCommand = dirNormalizedInputs.rfind(_command);
+    if (hasCommand != std::string::npos)
+    {
+        char inputDir = m_InputBuffer[hasCommand + _command.length() - 1];
+        if (inputDir == '4')
+            _character->SetDirection(-1);
+        else if (inputDir == '6')
+            _character->SetDirection(1);
+        return true;
+    }
+
+    return false;
 }

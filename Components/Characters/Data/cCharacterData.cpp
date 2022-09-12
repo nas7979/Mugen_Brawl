@@ -73,6 +73,24 @@ void cCharacterData::Deserialize(char* _buffer, UINT& _pointer)
 
     m_Palettes.Deserialize(_buffer, _pointer);
 
+    m_Commands.clear();
+
+    for (char i = 'a'; i <= 'c'; i++)
+    {
+        std::string command = std::string("626") + i;
+        auto find = m_Animations.find(command);
+        if (find != m_Animations.end())
+            m_Commands.push_back(command);
+    }
+    
+    for (char i = 'a'; i <= 'c'; i++)
+    {
+        std::string command = std::string("26") + i;
+        auto find = m_Animations.find(command);
+        if (find != m_Animations.end())
+            m_Commands.push_back(command);
+    }
+    
     m_Version = CURRENT_VERSION;
 }
 

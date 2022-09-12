@@ -45,6 +45,9 @@ void cCharacterAnimation::AddSprite(cCharacterSprite* _sprite)
 
 cCharacterSprite* cCharacterAnimation::GetSprite(int _frame)
 {
+    if (_frame >= m_Sprites->GetLength())
+        return nullptr;
+    
     return (*m_Sprites)[_frame];
 }
 

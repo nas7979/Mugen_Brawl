@@ -11,8 +11,7 @@ cFrameList::~cFrameList()
 void cFrameList::Init()
 {
     cGUI::Init();
-    SetAnimation(nullptr);
-    SetFrame(0);
+    m_CurAnimation = nullptr;
 }
 
 void cFrameList::Update()
@@ -381,7 +380,10 @@ void cFrameList::SetFrame(int _frame)
     m_SelectedFrames.clear();
     m_DragStartedFrame = -1;
     if (m_CurAnimation == nullptr)
+    {
+        SCENE->GetScene<cEditorScene>()->GetSpritePanel()->OnFrameChanged();
         return;
+    }
     
     m_SelectedFrames.push_back(_frame);
 
