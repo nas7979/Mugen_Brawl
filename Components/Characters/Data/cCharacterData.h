@@ -20,7 +20,7 @@ private:
     short m_FallSpeed = 500;
     short m_FastFallSpeed = 800;
     short m_WalkSpeed = 200;
-    short m_DashSpeed = 500;
+    short m_DashSpeed = 800;
     short m_AirSpeed = 200;
     short m_AirMovementLimit = 2;
     short m_ShieldSize = 125;

@@ -19,6 +19,7 @@ void cCharacter::Update()
     {
         bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right);
         bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left);
+        int prevDir = Sign(m_Owner->GetScale().x);
 
         if (isRightPressed && isLeftPressed)
         {
@@ -26,6 +27,10 @@ void cCharacter::Update()
                 isRightPressed = false;
             else
                 isLeftPressed = false;
+        }
+        else if (!isRightPressed && !isLeftPressed)
+        {
+            RemoveFlag(Flag::Dashing);
         }
         
         if (HasFlag(Flag::Standing))
@@ -51,6 +56,12 @@ void cCharacter::Update()
                 pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
                 m_Owner->SetPos(pos);
             }
+
+            if (prevDir != Sign(m_Owner->GetScale().x))
+            {
+                RemoveFlag(Flag::Dashing);
+                SetAnimation("TurnStand");
+            }
         }
         else if (HasFlag(Flag::Crouching))
         {
@@ -71,6 +82,7 @@ void cCharacter::Update()
             {
                 RemoveFlag(Flag::Standing);
                 AddFlag(Flag::Crouching);
+                RemoveFlag(Flag::Dashing);
 
                 if (!CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
                 {
@@ -103,6 +115,11 @@ void cCharacter::Update()
             {
                 SetAnimation("Jump");
             }
+        }
+
+        if (INPUT->CheckInputBuffer("66", this) && !HasFlag(Flag::Dashing))
+        {
+            AddFlag(Flag::Dashing);
         }
 
         for (auto& command : m_Data->GetCommands())
@@ -239,7 +256,7 @@ void cCharacter::SetDirection(int _dir)
     m_Owner->SetScale(Vec2(_dir, 1) * m_Data->GetSpriteScale());
     if (m_State == State::Idle && prevDir != _dir)
     {
-        if (HasFlag(Flag::Standing) && (CheckCurAnimation("Idle") || CheckCurAnimation("Walk")))
+        if (HasFlag(Flag::Standing) && (CheckCurAnimation("Idle") || CheckCurAnimation("Walk") || CheckCurAnimation("Dash")))
             SetAnimation("TurnStand");
         else if (HasFlag(Flag::Crouching) && CheckCurAnimation("Crouch"))
             SetAnimation("TurnCrouch");
