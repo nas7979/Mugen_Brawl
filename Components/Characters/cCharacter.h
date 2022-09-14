@@ -76,6 +76,7 @@ private:
 
     void SetAnimation(const std::string& _key) const {m_AnimPlayer->SetAnimation(m_Data->GetAnimation(_key));}
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
+    bool CheckInputs();
 public:
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);

@@ -181,7 +181,7 @@ void cInputManager::ClearInputBuffer()
     m_InputBuffer.clear();
 }
 
-bool cInputManager::CheckInputBuffer(const std::string& _command, cCharacter* _character) const
+bool cInputManager::CheckInputBuffer(const std::string& _command, cCharacter* _character)
 {
     std::string dirNormalizedInputs = m_InputBuffer;
     for (int i = 0; i < dirNormalizedInputs.size(); i++)
@@ -198,6 +198,8 @@ bool cInputManager::CheckInputBuffer(const std::string& _command, cCharacter* _c
             _character->SetDirection(-1);
         else if (inputDir == '6')
             _character->SetDirection(1);
+
+        m_InputBuffer.clear();
         return true;
     }
 

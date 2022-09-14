@@ -66,10 +66,11 @@ public:
     void ClearDoQueue();
     
     void ClearInputBuffer();
-    bool CheckInputBuffer(const std::string& _command, cCharacter* _character) const;
+    bool CheckInputBuffer(const std::string& _command, cCharacter* _character);
     short GetGameInput() const {return m_GameInput;}
     bool CheckGameInput(IngameInput _input) const {return (m_GameInput & 1 << (short)_input) != 0;}
     short GetGameInputPressTimer(IngameInput _input) const {return m_GameInputPressTimer[(short)_input];}
+    const std::string& GetInputBuffer() const {return const_cast<std::string&>(m_InputBuffer);}
 };
 
 #define INPUT cInputManager::GetInstance()

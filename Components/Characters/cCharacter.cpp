@@ -17,6 +17,9 @@ void cCharacter::Update()
 {
     if (m_State == State::Idle)
     {
+        if (CheckInputs())
+            return;
+        
         bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right);
         bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left);
         int prevDir = Sign(m_Owner->GetScale().x);
@@ -80,28 +83,28 @@ void cCharacter::Update()
         {
             if (INPUT->CheckGameInput(IngameInput::Down))
             {
-                RemoveFlag(Flag::Standing);
-                AddFlag(Flag::Crouching);
-                RemoveFlag(Flag::Dashing);
-
-                if (!CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
+                if (HasFlag(Flag::Standing))
                 {
                     SetAnimation("CrouchStart");
                 }
+                
+                RemoveFlag(Flag::Standing);
+                AddFlag(Flag::Crouching);
+                RemoveFlag(Flag::Dashing);
             }
             else
             {
-                RemoveFlag(Flag::Crouching);
-                AddFlag(Flag::Standing);
-
-                if (CheckCurAnimation("Crouch"))
+                if (HasFlag(Flag::Crouching))
                 {
                     SetAnimation("CrouchEnd");
                 }
+                
+                RemoveFlag(Flag::Crouching);
+                AddFlag(Flag::Standing);
             }
         }
 
-        if (INPUT->GetGameInput() == 0)
+        if ((!isLeftPressed && !isRightPressed) || HasFlag(Flag::Crouching))
         {
             if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd") && !CheckCurAnimation("TurnStand"))
             {
@@ -114,21 +117,6 @@ void cCharacter::Update()
             else if (HasFlag(Flag::InAir) && !CheckCurAnimation("Jump"))
             {
                 SetAnimation("Jump");
-            }
-        }
-
-        if (INPUT->CheckInputBuffer("66", this) && !HasFlag(Flag::Dashing))
-        {
-            AddFlag(Flag::Dashing);
-        }
-
-        for (auto& command : m_Data->GetCommands())
-        {
-            if (INPUT->CheckInputBuffer(command, this))
-            {
-                m_State = State::Action;
-                SetAnimation(command);
-                break;
             }
         }
     }
@@ -228,6 +216,58 @@ void cCharacter::Deserialize(char* _buffer, UINT& _pointer)
 size_t cCharacter::GetSize() const
 {
     return 0;
+}
+
+bool cCharacter::CheckInputs()
+{
+    if (INPUT->GetInputBuffer().empty())
+        return false;
+    
+    if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
+    {
+        AddFlag(Flag::Dashing);
+        return false;
+    }
+
+    for (auto& command : m_Data->GetCommands())
+    {
+        if (INPUT->CheckInputBuffer(command, this))
+        {
+            m_State = State::Action;
+            SetAnimation(command);
+            return true;
+        }
+    }
+
+    char normalInput[3] = {0, };
+    if (HasFlag(Flag::InAir))
+    {
+        normalInput[0] = 'j';
+    }
+    else
+    {
+        normalInput[0] = '5';
+        if (INPUT->CheckGameInput(IngameInput::Left) || INPUT->CheckGameInput(IngameInput::Right))
+            normalInput[0] = '6';
+        if (HasFlag(Flag::Crouching))
+            normalInput[0] = '2';   
+    }
+    
+    char lastInputBufferChar = INPUT->GetInputBuffer()[INPUT->GetInputBuffer().size() - 1];
+    if (lastInputBufferChar == 'c') normalInput[1] = 'c';
+    if (lastInputBufferChar == 'b') normalInput[1] = 'b';
+    if (lastInputBufferChar == 'a') normalInput[1] = 'a';
+
+    if (normalInput[1] != 0)
+    {
+        m_State = State::Action;
+        SetAnimation(normalInput);
+        if (INPUT->CheckGameInput(IngameInput::Left))
+            SetDirection(-1);
+        else if (INPUT->CheckGameInput(IngameInput::Right))
+            SetDirection(1);
+        return true;
+    }
 }
 
 void cCharacter::SetData(cCharacterData* _data)
