@@ -34,6 +34,8 @@ void cCharacterAnimationPlayer::Update()
     m_FrameTimer += m_Speed;
     if (m_FrameTimer >= sprite->GetFrameLength())
     {
+        for (auto& iter : sprite->GetSeparatedEventKeys())
+            m_Character->HandleSpriteEvent(iter.first, iter.second);
         m_FrameTimer -= sprite->GetFrameLength();
         m_CurFrame++;
 
@@ -66,6 +68,11 @@ void cCharacterAnimationPlayer::SetAnimation(cCharacterAnimation* _anim, bool _r
     m_CurAnim = _anim;
     if (_resetFrame)
         SetFrame(0);
+
+    for (auto& iter : _anim->GetSprite(0)->GetSeparatedEventKeys())
+        m_Character->HandleSpriteEvent(iter.first, iter.second);
+    for (auto& iter : _anim->GetSeparatedEventKeys())
+        m_Character->HandleAnimationEvent(iter.first, iter.second);
 }
 
 void cCharacterAnimationPlayer::SetFrame(int _frame)

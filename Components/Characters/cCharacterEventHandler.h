@@ -18,10 +18,10 @@ public:
     virtual void OnCollisionWithCharacter(cCharacter* _with, RECT _overlappedRect) = 0;
     virtual void OnCollisionWithMap(cCharacter* _with, RECT _overlappedRect) = 0;
  
-    virtual void HandleAnimationEvent(std::string _eventKey) = 0;
-    virtual void HandleSpriteEvent(std::string _eventKey) = 0;
-    virtual void HandleHurtBoxEvent(std::string _eventKey) = 0;
-    virtual void HandleHitBoxEvent(std::string _eventKey) = 0;
-    virtual void HandleThrowBoxEvent(std::string _eventKey) = 0;
-    virtual void HandleBodyBoxEvent(std::string _eventKey) = 0;
+    virtual void HandleAnimationEvent(const std::string& _key, const std::string& _value) = 0;
+    virtual void HandleSpriteEvent(const std::string& _key, const std::string& _value) = 0;
+    virtual void HandleHurtBoxEvent(const std::string& _key, const std::string& _value) = 0;
+    virtual void HandleHitBoxEvent(const std::string& _key, const std::string& _value) = 0;
+    virtual void HandleThrowBoxEvent(const std::string& _key, const std::string& _value) = 0;
+    virtual void HandleBodyBoxEvent(const std::string& _key, const std::string& _value) = 0;
 };

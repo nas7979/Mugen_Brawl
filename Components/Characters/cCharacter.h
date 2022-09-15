@@ -53,12 +53,12 @@ public:
     void OnCollisionWithCharacter(cCharacter* _with, RECT _overlappedRect) override;
     void OnCollisionWithMap(cCharacter* _with, RECT _overlappedRect) override;
 
-    void HandleAnimationEvent(std::string _eventKey) override;
-    void HandleSpriteEvent(std::string _eventKey) override;
-    void HandleHurtBoxEvent(std::string _eventKey) override;
-    void HandleHitBoxEvent(std::string _eventKey) override;
-    void HandleThrowBoxEvent(std::string _eventKey) override;
-    void HandleBodyBoxEvent(std::string _eventKey) override;
+    void HandleAnimationEvent(const std::string& _key, const std::string& _value) override;
+    void HandleSpriteEvent(const std::string& _key, const std::string& _value) override;
+    void HandleHurtBoxEvent(const std::string& _key, const std::string& _value) override;
+    void HandleHitBoxEvent(const std::string& _key, const std::string& _value) override;
+    void HandleThrowBoxEvent(const std::string& _key, const std::string& _value) override;
+    void HandleBodyBoxEvent(const std::string& _key, const std::string& _value) override;
 
     void Serialize(char* _buffer, UINT& _pointer) const override;
     void Deserialize(char* _buffer, UINT& _pointer) override;

@@ -31,6 +31,7 @@ void cCharacterAnimation::Deserialize(char* _buffer, UINT& _pointer)
     m_Sprites->Deserialize(_buffer, _pointer);
     m_Tags.Deserialize(_buffer, _pointer);
     m_EventKey.Deserialize(_buffer, _pointer);
+    SeparateEventKey();
 }
 
 size_t cCharacterAnimation::GetSize() const

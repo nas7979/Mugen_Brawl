@@ -57,6 +57,7 @@ void cCharacterSprite::Deserialize(char* _buffer, UINT& _pointer)
     m_Texture->height = info.Height;
 
     m_EventKey.Deserialize(_buffer, _pointer);
+    SeparateEventKey();
 }
 
 size_t cCharacterSprite::GetSize() const

@@ -17,6 +17,31 @@ void cCharacter::Update()
 {
     if (m_State == State::Idle)
     {
+        if (!HasFlag(Flag::InAir))
+        {
+            if (INPUT->CheckGameInput(IngameInput::Down))
+            {
+                if (HasFlag(Flag::Standing))
+                {
+                    SetAnimation("CrouchStart");
+                }
+                
+                RemoveFlag(Flag::Standing);
+                AddFlag(Flag::Crouching);
+                RemoveFlag(Flag::Dashing);
+            }
+            else
+            {
+                if (HasFlag(Flag::Crouching))
+                {
+                    SetAnimation("CrouchEnd");
+                }
+                
+                RemoveFlag(Flag::Crouching);
+                AddFlag(Flag::Standing);
+            }
+        }
+        
         if (CheckInputs())
             return;
         
@@ -76,31 +101,6 @@ void cCharacter::Update()
             if (isRightPressed)
             {
                 SetDirection(1);
-            }
-        }
-
-        if (!HasFlag(Flag::InAir))
-        {
-            if (INPUT->CheckGameInput(IngameInput::Down))
-            {
-                if (HasFlag(Flag::Standing))
-                {
-                    SetAnimation("CrouchStart");
-                }
-                
-                RemoveFlag(Flag::Standing);
-                AddFlag(Flag::Crouching);
-                RemoveFlag(Flag::Dashing);
-            }
-            else
-            {
-                if (HasFlag(Flag::Crouching))
-                {
-                    SetAnimation("CrouchEnd");
-                }
-                
-                RemoveFlag(Flag::Crouching);
-                AddFlag(Flag::Standing);
             }
         }
 
@@ -181,27 +181,33 @@ void cCharacter::OnCollisionWithMap(cCharacter* _with, RECT _overlappedRect)
 {
 }
 
-void cCharacter::HandleAnimationEvent(std::string _eventKey)
+void cCharacter::HandleAnimationEvent(const std::string& _key, const std::string& _value)
 {
 }
 
-void cCharacter::HandleSpriteEvent(std::string _eventKey)
+void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _value)
+{
+    if (_key == "Sound")
+    {
+        cSound* sound = m_Data->GetSoundSet(_value)->PickSound();
+        SOUND->Play(sound->GetSound(), (int)sound->GetVolume());
+        return;
+    }
+}
+
+void cCharacter::HandleHurtBoxEvent(const std::string& _key, const std::string& _value)
 {
 }
 
-void cCharacter::HandleHurtBoxEvent(std::string _eventKey)
+void cCharacter::HandleHitBoxEvent(const std::string& _key, const std::string& _value)
 {
 }
 
-void cCharacter::HandleHitBoxEvent(std::string _eventKey)
+void cCharacter::HandleThrowBoxEvent(const std::string& _key, const std::string& _value)
 {
 }
 
-void cCharacter::HandleThrowBoxEvent(std::string _eventKey)
-{
-}
-
-void cCharacter::HandleBodyBoxEvent(std::string _eventKey)
+void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& _value)
 {
 }
 
