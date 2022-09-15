@@ -15,6 +15,20 @@ public:
 
 private:
     cInputField* m_NameInputField;
+    
+    cInputField* m_WeightInputField;
+    cInputField* m_JumpHeightInputField;
+    cInputField* m_AirMovementLimitInputField;
+    
+    cInputField* m_WalkSpeedInputField;
+    cInputField* m_DashSpeedInputField;
+    cInputField* m_AirSpeedInputField;
+    
+    cInputField* m_FallSpeedInputField;
+    cInputField* m_FastFallSpeedInputField;
+    
+    cInputField* m_ShieldSizeInputField;
+    cInputField* m_ShieldDecSpeedInputField;
 
 public:
     void Save(cCharacterData* _data) override;
