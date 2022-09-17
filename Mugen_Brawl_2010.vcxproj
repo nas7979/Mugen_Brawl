@@ -475,6 +475,7 @@
     <ClCompile Include="Components\GUI\EditorPanels\cEditorTestPanel.cpp" />
     <ClCompile Include="Components\Renderer\cRenderer.cpp" />
     <ClCompile Include="Managers\Camera\cCameraManager.cpp" />
+    <ClCompile Include="Managers\Game\cGameManager.cpp" />
     <ClCompile Include="Managers\Input\cInputManager.cpp" />
     <ClCompile Include="Managers\Input\cMsgProcHandler.cpp" />
     <ClCompile Include="Managers\Object\cObject.cpp" />
@@ -604,6 +605,7 @@
     <ClInclude Include="MainGame\cMainGame.h" />
     <ClInclude Include="Managers\Camera\cCameraManager.h" />
     <ClInclude Include="Managers\cSingleton.h" />
+    <ClInclude Include="Managers\Game\cGameManager.h" />
     <ClInclude Include="Managers\Image\cImageManager.h" />
     <ClInclude Include="Managers\Input\cInputManager.h" />
     <ClInclude Include="Managers\Input\cMsgProcHandler.h" />

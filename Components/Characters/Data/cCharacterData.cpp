@@ -189,5 +189,8 @@ void cCharacterData::RemoveSoundSet(std::string _key)
 
 cSoundSet* cCharacterData::GetSoundSet(std::string _key)
 {
-    return m_SoundSets[_key];
+    auto find = m_SoundSets.find(_key);
+    if (find == m_SoundSets.end())
+        return nullptr;
+    return (*find).second;
 }

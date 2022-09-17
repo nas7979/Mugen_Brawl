@@ -10,10 +10,6 @@ void cInputManager::Update()
     if (GetFocus() != DXUTGetHWND())
         return;
     
-    m_InputBufferClearTimer--;
-    if (m_InputBufferClearTimer <= 0)
-        m_InputBuffer.clear();
-    
     memcpy(m_OldKeys, m_CurKeys, sizeof(m_CurKeys));
     memset(m_CurKeys, 0, sizeof(m_CurKeys));
 
@@ -26,6 +22,8 @@ void cInputManager::Update()
     }
 
     m_GameInput = 0;
+    bool isInputed = false;
+    InputData* lastInput = m_InputBuffer.empty() ? &InputData(IngameInput::None, 0, 0) : &m_InputBuffer[m_InputBuffer.size() - 1];
     for (int i = 0; i < 16; i++)
     {
         if (m_CurKeys[m_GameInputBindings[i]])
@@ -35,14 +33,44 @@ void cInputManager::Update()
 
             if (!m_OldKeys[m_GameInputBindings[i]])
             {
-                m_InputBuffer.push_back(m_GameInputToNotations[i]);
-                m_InputBufferClearTimer = INPUT_BUFFER_CLEAR_DELAY;
+                if (lastInput->input == (IngameInput)i && lastInput->pressedAt + m_GameInputBufferedFrame[i] <= FRAME_TIMER)
+                    lastInput->removeTimer = 0;
+                
+                m_InputBuffer.emplace_back((IngameInput)i, m_GameInputBufferedFrame[i] > 10 ? -1 : m_GameInputBufferedFrame[i], FRAME_TIMER);
+                if (m_InputBuffer.size() > 10)
+                    m_InputBuffer.erase(m_InputBuffer.begin());
             }
         }
         else
         {
             m_GameInputPressTimer[i] = 0;
         }
+    }
+
+    m_StringInputBuffer.clear();
+    for (auto iter = m_InputBuffer.begin(); iter != m_InputBuffer.end();)
+    {
+        if ((*iter).removeTimer < 0)
+        {
+            if (KeyUp(m_GameInputBindings[(short)(*iter).input]))
+                (*iter).removeTimer = m_GameInputBufferedFrame[(short)(*iter).input];
+        }
+        else
+        {
+            if ((*iter).removeTimer == 0)
+            {
+                iter = m_InputBuffer.erase(iter);
+                continue;
+            }
+
+            (*iter).removeTimer--;
+
+            if (isInputed && (*iter).input >= IngameInput::Up && (*iter).input <= IngameInput::Right)
+                (*iter).removeTimer += m_GameInputBufferedFrame[(short)(*iter).input] / 4;
+        }
+        
+        m_StringInputBuffer.push_back(m_GameInputToNotations[(short)(*iter).input]);
+        iter++;
     }
     
     POINT pt;
@@ -83,18 +111,10 @@ void cInputManager::Update()
 
 void cInputManager::Render()
 {
-    m_WindowInputBuffer.clear();
 }
 
 void cInputManager::HandleWindowInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch(uMsg)
-    {
-    case WM_CHAR:
-            m_WindowInputBuffer.push_back((char)wParam);
-        break;
-    }
-
     for (auto handler : m_MsgProcHandlers)
     {
         handler->MsgProc(uMsg, wParam, lParam);
@@ -181,25 +201,30 @@ void cInputManager::ClearInputBuffer()
     m_InputBuffer.clear();
 }
 
-bool cInputManager::CheckInputBuffer(const std::string& _command, cCharacter* _character)
+bool cInputManager::CheckInputBuffer(std::string _command, cCharacter* _character)
 {
-    std::string dirNormalizedInputs = m_InputBuffer;
-    for (int i = 0; i < dirNormalizedInputs.size(); i++)
+    if (Sign(_character->GetOwner()->GetScale().x) == -1)
     {
-        if (dirNormalizedInputs[i] == '4')
-            dirNormalizedInputs[i] = '6';
+        for (int i = 0; i < _command.size(); i++)
+        {
+            if (_command[i] == '6')
+                _command[i] = '4';
+        }
     }
 
-    size_t hasCommand = dirNormalizedInputs.rfind(_command);
+    size_t hasCommand = m_StringInputBuffer.find(_command);
     if (hasCommand != std::string::npos)
     {
-        char inputDir = m_InputBuffer[hasCommand + _command.length() - 1];
+        char inputDir = m_StringInputBuffer[hasCommand + _command.length() - 1];
         if (inputDir == '4')
             _character->SetDirection(-1);
         else if (inputDir == '6')
             _character->SetDirection(1);
 
-        m_InputBuffer.clear();
+        for (int i = hasCommand; i < hasCommand + _command.size(); i++)
+        {
+            //m_InputBuffer[i].removeTimer = INPUT_BUFFER_CLEAR_DELAY;
+        }
         return true;
     }
 

@@ -43,7 +43,9 @@ void cCharacter::Update()
         }
         
         if (CheckInputs())
+        {
             return;
+        }
         
         bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right);
         bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left);
@@ -226,14 +228,8 @@ size_t cCharacter::GetSize() const
 
 bool cCharacter::CheckInputs()
 {
-    if (INPUT->GetInputBuffer().empty())
+    if (INPUT->GetInputBufferSize() == 0)
         return false;
-    
-    if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
-    {
-        AddFlag(Flag::Dashing);
-        return false;
-    }
 
     for (auto& command : m_Data->GetCommands())
     {
@@ -241,6 +237,15 @@ bool cCharacter::CheckInputs()
         {
             m_State = State::Action;
             SetAnimation(command);
+
+            cSoundSet* soundSet = m_Data->GetSoundSet(command);
+            if (soundSet != nullptr)
+            {
+                cSound* sound = soundSet->PickSound();
+                SOUND->Play(sound->GetSound(), sound->GetVolume());
+            }
+
+            INPUT->ClearInputBuffer();
             return true;
         }
     }
@@ -259,10 +264,10 @@ bool cCharacter::CheckInputs()
             normalInput[0] = '2';   
     }
     
-    char lastInputBufferChar = INPUT->GetInputBuffer()[INPUT->GetInputBuffer().size() - 1];
-    if (lastInputBufferChar == 'c') normalInput[1] = 'c';
-    if (lastInputBufferChar == 'b') normalInput[1] = 'b';
-    if (lastInputBufferChar == 'a') normalInput[1] = 'a';
+    IngameInput lastInputBufferChar = INPUT->GetLastBufferedInput();
+    if (lastInputBufferChar == IngameInput::C) normalInput[1] = 'c';
+    if (lastInputBufferChar == IngameInput::B) normalInput[1] = 'b';
+    if (lastInputBufferChar == IngameInput::A) normalInput[1] = 'a';
 
     if (normalInput[1] != 0)
     {
@@ -272,8 +277,23 @@ bool cCharacter::CheckInputs()
             SetDirection(-1);
         else if (INPUT->CheckGameInput(IngameInput::Right))
             SetDirection(1);
+
+        char attackSound[] = "Attack_A";
+        attackSound[7] = normalInput[1] + ('A' - 'a');
+        cSound* sound = m_Data->GetSoundSet(attackSound)->PickSound();
+        SOUND->Play(sound->GetSound(), sound->GetVolume());
+
+        INPUT->ClearInputBuffer();
         return true;
     }
+
+    if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
+    {
+        AddFlag(Flag::Dashing);
+        return false;
+    }
+
+    return false;
 }
 
 void cCharacter::SetData(cCharacterData* _data)

@@ -13,6 +13,7 @@ void cMainGame::Init()
     CAMERA->CreateInstance();
     INPUT->CreateInstance();
     SOUND->CreateInstance();
+    GAME->CreateInstance();
     
     SCENE->AddScene("LOADING", new cLoadingScene());
     SCENE->AddScene("EDITOR", new cEditorScene());
@@ -27,6 +28,7 @@ void cMainGame::Update()
     SCENE->Update();
     OBJECT->Update();
     CAMERA->Update();
+    GAME->Update();
     SOUND->Update();
 }
 
@@ -58,6 +60,7 @@ void cMainGame::Release()
     INPUT->ReleaseInstance();
     SOUND->ReleaseInstance();
     IMAGE->ReleaseInstance();
+    GAME->ReleaseInstance();
 }
 
 void cMainGame::OnLostDevice()
