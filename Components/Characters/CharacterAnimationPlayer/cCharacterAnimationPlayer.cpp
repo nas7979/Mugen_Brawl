@@ -38,13 +38,15 @@ void cCharacterAnimationPlayer::Update()
             m_Character->HandleSpriteEvent(iter.first, iter.second);
         m_FrameTimer -= sprite->GetFrameLength();
         m_CurFrame++;
-        m_Character->AddVelocity(Vec2(sprite->GetMomentum().x / 60.f * Sign(m_Owner->GetScale().x), sprite->GetMomentum().y / 60.f));
 
         if (m_CurFrame >= m_CurAnim->GetLength())
         {
             m_CurFrame -= m_CurAnim->GetLength();
             m_Character->OnAnimationEnd(m_CurAnim);
         }
+
+        sprite = GetCurrentSprite();
+        m_Character->AddVelocity(Vec2(sprite->GetMomentum().x / 60.f * Sign(m_Owner->GetScale().x), sprite->GetMomentum().y / 60.f));
     }
 }
 
