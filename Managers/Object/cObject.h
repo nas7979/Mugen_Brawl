@@ -5,8 +5,7 @@ class cComponent;
 enum ObjectTag
 {
     Obj_Character,
-    Obj_HitBox,
-    Obj_HurtBox,
+    Obj_Map,
     Obj_Missile,
     Obj_Effect,
     Obj_GUI,

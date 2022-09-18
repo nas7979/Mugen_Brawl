@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "../Data/cCharacterAnimation.h"
 
 class cCharacterAnimation;
 
@@ -30,5 +31,6 @@ public:
     cCharacterAnimation* GetCurrentAnimation() const {return m_CurAnim;}
     void SetFrame(int _frame);
     int GetCurrentFrame() const {return m_CurFrame;}
+    cCharacterSprite* GetCurrentSprite() const {return m_CurAnim->GetSprite(m_CurFrame);}
     
 };

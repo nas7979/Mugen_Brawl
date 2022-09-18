@@ -80,3 +80,8 @@ void cObjectManager::FindObjects(std::vector<cObject*>& _out, ObjectTag _tag, st
         }
     }
 }
+
+const std::list<cObject*>& cObjectManager::GetObjects(ObjectTag _tag) const
+{
+    return m_Objects[_tag];
+}

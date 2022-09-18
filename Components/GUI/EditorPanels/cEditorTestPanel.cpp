@@ -1,6 +1,8 @@
 ﻿#include "DXUT.h"
 #include "cEditorTestPanel.h"
 
+#include "../../Maps/cBlock.h"
+
 cEditorTestPanel::~cEditorTestPanel()
 {
 }
@@ -8,6 +10,10 @@ cEditorTestPanel::~cEditorTestPanel()
 void cEditorTestPanel::Init()
 {
     cEditorPanel::Init();
+
+    cBlock* ground = OBJECT->AddObject<cBlock>("Block", Vec3(0,200, 0.9f), Obj_Map);
+    ground->GetOwner()->SetScale(Vec2(10000, 10));
+    m_Objects.push_back(ground->GetOwner());
 }
 
 void cEditorTestPanel::Update()

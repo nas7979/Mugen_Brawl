@@ -473,6 +473,7 @@
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSoundPanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorSpritePanel.cpp" />
     <ClCompile Include="Components\GUI\EditorPanels\cEditorTestPanel.cpp" />
+    <ClCompile Include="Components\Maps\cBlock.cpp" />
     <ClCompile Include="Components\Renderer\cRenderer.cpp" />
     <ClCompile Include="Managers\Camera\cCameraManager.cpp" />
     <ClCompile Include="Managers\Game\cGameManager.cpp" />
@@ -579,6 +580,7 @@
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSoundPanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorSpritePanel.h" />
     <ClInclude Include="Components\GUI\EditorPanels\cEditorTestPanel.h" />
+    <ClInclude Include="Components\Maps\cBlock.h" />
     <ClInclude Include="Components\Renderer\cRenderer.h" />
     <ClInclude Include="GGPO\include\ggponet.h" />
     <ClInclude Include="GGPO\lib\ggpo\backends\backend.h" />

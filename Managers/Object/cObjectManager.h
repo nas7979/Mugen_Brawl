@@ -26,6 +26,7 @@ public:
 
     cObject* FindObject(std::string _name, ObjectTag _tag);
     void FindObjects(std::vector<cObject*>& _out, ObjectTag _tag, std::string _name = "");
+    const std::list<cObject*>& GetObjects(ObjectTag _tag) const;
 };
 
 #define OBJECT cObjectManager::GetInstance()
