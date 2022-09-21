@@ -15,7 +15,7 @@
 // 2^BITVECTOR_NIBBLE_SIZE (see bitvector.h)
 
 #define GAMEINPUT_MAX_BYTES      9
-#define GAMEINPUT_MAX_PLAYERS    2
+#define GAMEINPUT_MAX_PLAYERS    MAX_PLAYER
 
 struct GameInput {
    enum Constants {

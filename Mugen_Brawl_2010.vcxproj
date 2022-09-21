@@ -477,6 +477,7 @@
     <ClCompile Include="Components\Renderer\cRenderer.cpp" />
     <ClCompile Include="Managers\Camera\cCameraManager.cpp" />
     <ClCompile Include="Managers\Game\cGameManager.cpp" />
+    <ClCompile Include="Managers\GGPO\cGGPOManager.cpp" />
     <ClCompile Include="Managers\Input\cInputManager.cpp" />
     <ClCompile Include="Managers\Input\cMsgProcHandler.cpp" />
     <ClCompile Include="Managers\Object\cObject.cpp" />
@@ -608,6 +609,7 @@
     <ClInclude Include="Managers\Camera\cCameraManager.h" />
     <ClInclude Include="Managers\cSingleton.h" />
     <ClInclude Include="Managers\Game\cGameManager.h" />
+    <ClInclude Include="Managers\GGPO\cGGPOManager.h" />
     <ClInclude Include="Managers\Image\cImageManager.h" />
     <ClInclude Include="Managers\Input\cInputManager.h" />
     <ClInclude Include="Managers\Input\cMsgProcHandler.h" />
@@ -676,7 +678,6 @@
     <ResourceCompile Include="Mugen_Brawl.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Managers\GGPO" />
     <Folder Include="Shaders" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

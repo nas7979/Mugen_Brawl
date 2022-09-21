@@ -21,56 +21,86 @@ void cInputManager::Update()
         }
     }
 
-    m_GameInput = 0;
-    bool isInputed = false;
-    InputData* lastInput = m_InputBuffer.empty() ? &InputData(IngameInput::None, 0, 0) : &m_InputBuffer[m_InputBuffer.size() - 1];
-    for (int i = 0; i < 16; i++)
+    for (int playerIndex = 0; playerIndex < MAX_PLAYER; playerIndex++)
     {
-        if (m_CurKeys[m_GameInputBindings[i]])
-        {
-            m_GameInputPressTimer[i]++;
-            m_GameInput |= 1 << i;
+        std::vector<InputData>& inputBuffer = m_InputBuffer[playerIndex];
+        std::string& stringInputBuffer = m_StringInputBuffer[playerIndex];
+        short& gameInput = m_GameInput[playerIndex];
 
-            if (!m_OldKeys[m_GameInputBindings[i]])
+        short prevGameInput = gameInput;
+
+        gameInput = 0;
+        if (playerIndex == 0)
+        {
+            for (int i = 0; i < 16; i++)
             {
-                if (lastInput->input == (IngameInput)i && lastInput->pressedAt + m_GameInputBufferedFrame[i] <= FRAME_TIMER)
-                    lastInput->removeTimer = 0;
-                
-                m_InputBuffer.emplace_back((IngameInput)i, m_GameInputBufferedFrame[i] > 10 ? -1 : m_GameInputBufferedFrame[i], FRAME_TIMER);
-                if (m_InputBuffer.size() > 10)
-                    m_InputBuffer.erase(m_InputBuffer.begin());
+                if (m_CurKeys[m_GameInputBindings[i]])
+                    gameInput |= 1 << i;
+            }
+        }
+        else if (playerIndex == 1 && GGPO->GetIsOffline())
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                if (m_CurKeys[m_GameInputBindings2P[i]])
+                    gameInput |= 1 << i;
             }
         }
         else
         {
-            m_GameInputPressTimer[i] = 0;
-        }
-    }
-
-    m_StringInputBuffer.clear();
-    for (auto iter = m_InputBuffer.begin(); iter != m_InputBuffer.end();)
-    {
-        if ((*iter).removeTimer < 0)
-        {
-            if (KeyUp(m_GameInputBindings[(short)(*iter).input]))
-                (*iter).removeTimer = m_GameInputBufferedFrame[(short)(*iter).input];
-        }
-        else
-        {
-            if ((*iter).removeTimer == 0)
-            {
-                iter = m_InputBuffer.erase(iter);
-                continue;
-            }
-
-            (*iter).removeTimer--;
-
-            if (isInputed && (*iter).input >= IngameInput::Up && (*iter).input <= IngameInput::Right)
-                (*iter).removeTimer += m_GameInputBufferedFrame[(short)(*iter).input] / 4;
         }
         
-        m_StringInputBuffer.push_back(m_GameInputToNotations[(short)(*iter).input]);
-        iter++;
+        bool isInputed = false;
+        InputData* lastInput = inputBuffer.empty() ? &InputData(IngameInput::None, 0, 0) : &inputBuffer[inputBuffer.size() - 1];
+        for (int i = 0; i < 16; i++)
+        {
+            short bitMask = 1 << i;
+            if ((gameInput & bitMask) != 0)
+            {
+                m_GameInputPressTimer[playerIndex][i]++;
+                gameInput |= bitMask;
+
+                if ((prevGameInput & bitMask) == 0)
+                {
+                    if (lastInput->input == (IngameInput)i && lastInput->pressedAt + m_GameInputBufferedFrame[i] <= FRAME_TIMER)
+                        lastInput->removeTimer = 0;
+                
+                    inputBuffer.emplace_back((IngameInput)i, m_GameInputBufferedFrame[i] > 10 ? -1 : m_GameInputBufferedFrame[i], FRAME_TIMER);
+                    if (inputBuffer.size() > 10)
+                        inputBuffer.erase(inputBuffer.begin());
+                }
+            }
+            else
+            {
+                m_GameInputPressTimer[playerIndex][i] = 0;
+            }
+        }
+
+        stringInputBuffer.clear();
+        for (auto iter = inputBuffer.begin(); iter != inputBuffer.end();)
+        {
+            if ((*iter).removeTimer < 0)
+            {
+                if (KeyUp(m_GameInputBindings[(short)(*iter).input]))
+                    (*iter).removeTimer = m_GameInputBufferedFrame[(short)(*iter).input];
+            }
+            else
+            {
+                if ((*iter).removeTimer == 0)
+                {
+                    iter = inputBuffer.erase(iter);
+                    continue;
+                }
+
+                (*iter).removeTimer--;
+
+                if (isInputed && (*iter).input >= IngameInput::Up && (*iter).input <= IngameInput::Right)
+                    (*iter).removeTimer += m_GameInputBufferedFrame[(short)(*iter).input] / 4;
+            }
+        
+            stringInputBuffer.push_back(m_GameInputToNotations[(short)(*iter).input]);
+            iter++;
+        }
     }
     
     POINT pt;
@@ -196,9 +226,9 @@ void cInputManager::ClearDoQueue()
     m_RedoQueue.clear();
 }
 
-void cInputManager::ClearInputBuffer()
+void cInputManager::ClearInputBuffer(short _playerIndex)
 {
-    m_InputBuffer.clear();
+    m_InputBuffer[_playerIndex].clear();
 }
 
 bool cInputManager::CheckInputBuffer(std::string _command, cCharacter* _character)
@@ -212,10 +242,11 @@ bool cInputManager::CheckInputBuffer(std::string _command, cCharacter* _characte
         }
     }
 
-    size_t hasCommand = m_StringInputBuffer.find(_command);
+    short playerIndex = _character->GetPlayerIndex();
+    size_t hasCommand = m_StringInputBuffer[playerIndex].find(_command);
     if (hasCommand != std::string::npos)
     {
-        char inputDir = m_StringInputBuffer[hasCommand + _command.length() - 1];
+        char inputDir = m_StringInputBuffer[playerIndex][hasCommand + _command.length() - 1];
         if (inputDir == '4')
             _character->SetDirection(-1);
         else if (inputDir == '6')

@@ -45,13 +45,13 @@ void cCharacter::Update()
     
     if (m_State == State::Idle)
     {
-        bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right);
-        bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left);
+        bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex);
+        bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex);
         int prevDir = Sign(m_Owner->GetScale().x);
 
         if (isRightPressed && isLeftPressed)
         {
-            if (INPUT->GetGameInputPressTimer(IngameInput::Right) > INPUT->GetGameInputPressTimer(IngameInput::Left))
+            if (INPUT->GetGameInputPressTimer(IngameInput::Right, m_PlayerIndex) > INPUT->GetGameInputPressTimer(IngameInput::Left, m_PlayerIndex))
                 isRightPressed = false;
             else
                 isLeftPressed = false;
@@ -73,7 +73,7 @@ void cCharacter::Update()
                 SetDirection(1);
             }
             
-            if (INPUT->CheckGameInput(IngameInput::Down))
+            if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
             {
                 if (HasFlag(Flag::Standing))
                 {
@@ -152,7 +152,7 @@ void cCharacter::Update()
         {
             if (INPUT->CheckInputBuffer("8", this))
             {
-                INPUT->ClearInputBuffer();
+                INPUT->ClearInputBuffer(m_PlayerIndex);
                 m_AirActionLimit--;
                 m_JumpDir = isLeftPressed ? -1 : isRightPressed ? 1 : 0;
                 if (!HasFlag(Flag::InAir))
@@ -324,7 +324,7 @@ size_t cCharacter::GetSize() const
 
 bool cCharacter::CheckInputs()
 {
-    if (INPUT->GetInputBufferSize() == 0)
+    if (INPUT->GetInputBufferSize(m_PlayerIndex) == 0)
         return false;
 
     for (auto& command : m_Data->GetCommands())
@@ -341,7 +341,7 @@ bool cCharacter::CheckInputs()
                 SOUND->Play(sound->GetSound(), sound->GetVolume());
             }
 
-            INPUT->ClearInputBuffer();
+            INPUT->ClearInputBuffer(m_PlayerIndex);
             return true;
         }
     }
@@ -354,13 +354,13 @@ bool cCharacter::CheckInputs()
     else
     {
         normalInput[0] = '5';
-        if (INPUT->CheckGameInput(IngameInput::Left) || INPUT->CheckGameInput(IngameInput::Right))
+        if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) || INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
             normalInput[0] = '6';
         if (HasFlag(Flag::Crouching))
             normalInput[0] = '2';   
     }
     
-    IngameInput lastInputBufferChar = INPUT->GetLastBufferedInput();
+    IngameInput lastInputBufferChar = INPUT->GetLastBufferedInput(m_PlayerIndex);
     if (lastInputBufferChar == IngameInput::C) normalInput[1] = 'c';
     if (lastInputBufferChar == IngameInput::B) normalInput[1] = 'b';
     if (lastInputBufferChar == IngameInput::A) normalInput[1] = 'a';
@@ -369,9 +369,9 @@ bool cCharacter::CheckInputs()
     {
         m_State = State::Action;
         SetAnimation(normalInput);
-        if (INPUT->CheckGameInput(IngameInput::Left))
+        if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex))
             SetDirection(-1);
-        else if (INPUT->CheckGameInput(IngameInput::Right))
+        else if (INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
             SetDirection(1);
 
         char attackSound[] = "Attack_A";
@@ -379,7 +379,7 @@ bool cCharacter::CheckInputs()
         cSound* sound = m_Data->GetSoundSet(attackSound)->PickSound();
         SOUND->Play(sound->GetSound(), sound->GetVolume());
 
-        INPUT->ClearInputBuffer();
+        INPUT->ClearInputBuffer(m_PlayerIndex);
         return true;
     }
 

@@ -44,6 +44,7 @@ using namespace Utility;
 #include "Managers/Input/cInputManager.h"
 #include "Managers/Sound/cSoundManager.h"
 #include "Managers/Game/cGameManager.h"
+#include "Managers/GGPO/cGGPOManager.h"
 
 #include "Components/Renderer/cRenderer.h"
 #include "Components/Characters/cCharacter.h"

@@ -74,6 +74,7 @@ private:
     State m_State;
     short m_AirActionLimit;
     short m_JumpDir;
+    short m_PlayerIndex;
     Vec2 m_Velocity;
     Vec2 m_Friction;
     float m_Damage;
@@ -90,6 +91,9 @@ private:
     bool CheckInputs();
     void Jump();
 public:
+    void SetPlayerIndex(int _index) {m_PlayerIndex = _index;}
+    short GetPlayerIndex() const {return m_PlayerIndex;}
+    
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);
     void Reset();

@@ -63,6 +63,13 @@ void cEditorTestPanel::OnShow()
     m_Character->SetData(m_Data);
     m_Character->SetPalette(0);
     m_Character->SetDirection(1);
+    m_Character->SetPlayerIndex(0);
+
+    m_Dummy = OBJECT->AddObject<cCharacter>(m_Data->GetName(), Vec3(100,0, 0.5f), Obj_Character);
+    m_Dummy->SetData(m_Data);
+    m_Dummy->SetPalette(1);
+    m_Dummy->SetDirection(1);
+    m_Dummy->SetPlayerIndex(1);
 }
 
 void cEditorTestPanel::OnHide()

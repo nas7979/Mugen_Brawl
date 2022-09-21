@@ -51,18 +51,19 @@ private:
     bool m_CurKeys[256];
     bool m_OldKeys[256];
     Vec2 m_MousePos;
-    std::vector<InputData> m_InputBuffer;
-    std::string m_StringInputBuffer;
+    std::vector<InputData> m_InputBuffer[MAX_PLAYER];
+    std::string m_StringInputBuffer[MAX_PLAYER];
     std::vector<cMsgProcHandler*> m_MsgProcHandlers;
     std::vector<cGUI*> m_ClickedGUIs;
     std::list<Action> m_UndoQueue;
     std::list<Action> m_RedoQueue;
     const int m_DoQueueMaxCount = 100;
-    short m_GameInput = 0;
-    char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
+    short m_GameInput[MAX_PLAYER];
+    unsigned char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
+    unsigned char m_GameInputBindings2P[16] {VK_UP, VK_LEFT, VK_DOWN, VK_RIGHT, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_OEM_PLUS, VK_NUMPAD6, };
     char m_GameInputToNotations[16] {'8', '4', '2', '6', 'a', 'b', 'c', 'd', 'r', };
     char m_GameInputBufferedFrame[16] {12, 12, 12, 12, 4, 4, 4, -1, -1, };
-    short m_GameInputPressTimer[16] {0, };
+    short m_GameInputPressTimer[MAX_PLAYER][16] {{0, }, };
 
 public:
     bool KeyDown(int _key) const {return m_CurKeys[_key] && !m_OldKeys[_key];}
@@ -78,13 +79,12 @@ public:
     void Do(const std::function<void()>& _do, const std::function<void()>& _undo);
     void ClearDoQueue();
     
-    void ClearInputBuffer();
+    void ClearInputBuffer(short _playerIndex);
     bool CheckInputBuffer(std::string _command, cCharacter* _character);
-    short GetGameInput() const {return m_GameInput;}
-    bool CheckGameInput(IngameInput _input) const {return (m_GameInput & 1 << (short)_input) != 0;}
-    short GetGameInputPressTimer(IngameInput _input) const {return m_GameInputPressTimer[(short)_input];}
-    int GetInputBufferSize() const {return m_InputBuffer.size();}
-    IngameInput GetLastBufferedInput() const {return m_InputBuffer[m_InputBuffer.size() - 1].input;}
+    bool CheckGameInput(IngameInput _input, short _playerIndex) const {return (m_GameInput[_playerIndex] & 1 << (short)_input) != 0;}
+    short GetGameInputPressTimer(IngameInput _input, short _playerIndex) const {return m_GameInputPressTimer[_playerIndex][(short)_input];}
+    int GetInputBufferSize(short _playerIndex) const {return m_InputBuffer[_playerIndex].size();}
+    IngameInput GetLastBufferedInput(short _playerIndex) const {return m_InputBuffer[_playerIndex][m_InputBuffer[_playerIndex].size() - 1].input;}
 };
 
 #define INPUT cInputManager::GetInstance()

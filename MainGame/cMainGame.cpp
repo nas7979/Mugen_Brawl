@@ -14,6 +14,7 @@ void cMainGame::Init()
     INPUT->CreateInstance();
     SOUND->CreateInstance();
     GAME->CreateInstance();
+    GGPO->CreateInstance();
     
     SCENE->AddScene("LOADING", new cLoadingScene());
     SCENE->AddScene("EDITOR", new cEditorScene());
@@ -24,6 +25,7 @@ void cMainGame::Init()
 
 void cMainGame::Update()
 {
+    GGPO->Update();
     INPUT->Update();
     SCENE->Update();
     OBJECT->Update();
@@ -61,6 +63,7 @@ void cMainGame::Release()
     SOUND->ReleaseInstance();
     IMAGE->ReleaseInstance();
     GAME->ReleaseInstance();
+    GGPO->ReleaseInstance();
 }
 
 void cMainGame::OnLostDevice()
