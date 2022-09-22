@@ -173,8 +173,6 @@ void cCharacter::Update()
     m_Velocity.y *= curSprite->GetFriction().y;
     
     m_Owner->SetPos(m_Owner->GetPos() + Vec3(m_Velocity.x, m_Velocity.y, 0));
-    UpdateRects();
-    CollisionCheck();
 }
 
 void cCharacter::Render()
@@ -236,6 +234,13 @@ void cCharacter::OnThrow(cCharacter* _to, cThrowBox* _myThrowBox, cBodyBox* _ene
 
 void cCharacter::OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
+    float collDirX = Sign(m_Owner->GetPos().x - _with->GetOwner()->GetPos().x);
+    
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * collDirX, 0, 0) * 0.5f);
+    _with->GetOwner()->SetPos(_with->GetOwner()->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * -collDirX, 0, 0) * 0.5f);
+
+    UpdateRects();
+    _with->UpdateRects();
 }
 
 void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const RECT& _overlapped)
@@ -306,6 +311,15 @@ void cCharacter::CollisionCheck()
         cBlock* block = iter->GetComponent<cBlock>();
         if (IntersectRect(&overlapped, &bodyRectForGround, &block->GetRect()))
             OnCollisionWithMap(block, bodyRectForGround, overlapped);
+    }
+
+    for (auto& iter : OBJECT->GetObjects(Obj_Character))
+    {
+        if (iter == GetOwner())
+            continue;
+        cCharacter* other = iter->GetComponent<cCharacter>();
+        if (IntersectRect(&overlapped, &m_BodyBoxes[0], &other->GetBodyBoxes()[0]))
+            OnCollisionWithCharacter(other, m_BodyBoxes[0], overlapped);
     }
 }
 

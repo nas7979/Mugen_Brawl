@@ -74,7 +74,8 @@ private:
     State m_State;
     short m_AirActionLimit;
     short m_JumpDir;
-    short m_PlayerIndex;
+    BYTE m_PlayerIndex;
+    BYTE m_Team;
     Vec2 m_Velocity;
     Vec2 m_Friction;
     float m_Damage;
@@ -90,6 +91,7 @@ private:
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
     bool CheckInputs();
     void Jump();
+    
 public:
     void SetPlayerIndex(int _index) {m_PlayerIndex = _index;}
     short GetPlayerIndex() const {return m_PlayerIndex;}
@@ -104,4 +106,8 @@ public:
     bool RemoveFlag(Flag _flag) {return m_Flag &= ~(int)_flag;}
     void SetDirection(int _dir);
     void UpdateRects();
+    const std::vector<RECT>& GetBodyBoxes() const {return m_BodyBoxes;}
+    const std::vector<RECT>& GetHurtBoxes() const {return m_HurtBoxes;}
+    const std::vector<RECT>& GetHitBoxes() const {return m_HitBoxes;}
+    const std::vector<RECT>& GetThrowBoxes() const {return m_ThrowBoxes;}
 };

@@ -23,6 +23,11 @@ void cObjectManager::Update()
                 iter++;
         }
     }
+
+    for (auto& iter : m_Objects[Obj_Character])
+        iter->GetComponent<cCharacter>()->UpdateRects();
+    for (auto& iter : m_Objects[Obj_Character])
+        iter->GetComponent<cCharacter>()->CollisionCheck();
 }
 
 void cObjectManager::Render()
