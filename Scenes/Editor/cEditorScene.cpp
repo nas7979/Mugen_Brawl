@@ -30,7 +30,7 @@ void cEditorScene::Update()
 
 void cEditorScene::Render()
 {
-    IMAGE->RenderSprite(IMAGE->GetTexture("Pixel"), Vec3(0, 0, 1), 0, Vec2(1920, 1080), Vec2(0, 0), 0xff808080, true);
+    IMAGE->RenderSprite(IMAGE->GetTexture("Pixel"), Vec3(0, 0, 0.99f), 0, Vec2(1920, 1080), Vec2(0, 0), 0xff808080, true);
 }
 
 void cEditorScene::Release()
