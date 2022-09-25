@@ -19,4 +19,18 @@ namespace Utility
 
     int HexToInt(const std::string& _hex);
     std::string IntToHex(int _int);
+
+    template<typename T>
+    bool Contains(const std::vector<T>& _vec, T _find);
+
+    template <typename T>
+    bool Contains(const std::vector<T>& _vec, T _find)
+    {
+        for (auto& iter : _vec)
+        {
+            if (iter == _find)
+                return true;
+        }
+        return false;
+    }
 };

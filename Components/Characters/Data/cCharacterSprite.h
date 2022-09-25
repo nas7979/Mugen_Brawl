@@ -80,11 +80,15 @@ public:
     void SetAttachPoints(AttachPoint** _attachPoints, int _length) {m_AttachPoints.SetValue(_attachPoints, _length);}
 
     int GetHitBoxes(cHitBox**& _pointer) {_pointer = m_HitBoxes.GetValue(); return m_HitBoxes.GetLength();}
+    cHitBox* GetHitBox(int _index) {return m_HitBoxes[_index];}
     void SetHitBoxes(cHitBox** _pointer, int _length) {m_HitBoxes.SetValue(_pointer, _length);}
     int GetThrowBoxes(cThrowBox**& _pointer) {_pointer = m_ThrowBoxes.GetValue(); return m_ThrowBoxes.GetLength();}
+    cThrowBox* GetThrowBox(int _index) {return m_ThrowBoxes[_index];}
     void SetThrowBoxes(cThrowBox** _pointer, int _length) {m_ThrowBoxes.SetValue(_pointer, _length);}
     int GetHurtBoxes(cHurtBox**& _pointer) {_pointer = m_HurtBoxes.GetValue(); return m_HurtBoxes.GetLength();}
+    cHurtBox* GetHurtBox(int _index) {return m_HurtBoxes[_index];}
     void SetHurtBoxes(cHurtBox** _pointer, int _length) {m_HurtBoxes.SetValue(_pointer, _length);}
     int GetBodyBoxes(cBodyBox**& _pointer) {_pointer = m_BodyBoxes.GetValue(); return m_BodyBoxes.GetLength();}
+    cBodyBox* GetBodyBox(int _index) {return m_BodyBoxes[_index];}
     void SetBodyBoxes(cBodyBox** _pointer, int _length) {m_BodyBoxes.SetValue(_pointer, _length);}
 };

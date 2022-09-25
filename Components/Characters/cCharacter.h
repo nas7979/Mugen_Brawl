@@ -86,6 +86,7 @@ private:
     std::vector<RECT> m_HurtBoxes;
     std::vector<RECT> m_HitBoxes;
     std::vector<RECT> m_ThrowBoxes;
+    SerializedVector<int> m_AttackedCharacters;
 
     void SetAnimation(const std::string& _key) const {m_AnimPlayer->SetAnimation(m_Data->GetAnimation(_key));}
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
@@ -93,13 +94,16 @@ private:
     void Jump();
     
 public:
+    cCharacterSprite* GetCurrentSprite() const {return m_AnimPlayer->GetCurrentSprite();}
     void SetPlayerIndex(int _index) {m_PlayerIndex = _index;}
     short GetPlayerIndex() const {return m_PlayerIndex;}
+    void SetTeam(BYTE _team) {m_Team = _team;}
+    BYTE GetTeam() const {return m_Team;}
     
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);
     void Reset();
-    void AddVelocity(const Vec2& _vel);
+    void AddVelocity(const Vec2& _vel, bool _reset = false);
 
     bool HasFlag(Flag _flag) const {return (m_Flag & (int)_flag) != 0;}
     bool AddFlag(Flag _flag) {return m_Flag |= (int)_flag;}

@@ -214,6 +214,7 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
     }
 
     m_State = State::Idle;
+    m_AttackedCharacters.GetValue()->clear();
 }
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)
@@ -222,6 +223,11 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
 
 void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect)
 {
+    float radDir = D3DXToRadian(_myHitBox->GetDirection());
+    Vec2 dirVec = Vec2(cos(radDir) * Sign(m_Owner->GetScale().x), sin(radDir));
+    float knockBack = (_myHitBox->GetBaseKnockBack() + _myHitBox->GetGrowthKnockBack()) / 60.f;
+    _to->AddVelocity(dirVec * knockBack);
+    m_AttackedCharacters.GetValue()->push_back(_to->GetOwner()->GetUID());
 }
 
 void cCharacter::OnThrown(cCharacter* _by, cBodyBox* _myBodyBox, cThrowBox* _enemyThrowBox, RECT _overlappedRect)
@@ -280,6 +286,12 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
         SOUND->Play(sound->GetSound(), (int)sound->GetVolume());
         return;
     }
+
+    if (_key == "ResetHit")
+    {
+        m_AttackedCharacters.GetValue()->clear();
+        return;
+    }
 }
 
 void cCharacter::HandleHurtBoxEvent(const std::string& _key, const std::string& _value)
@@ -301,7 +313,8 @@ void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& 
 void cCharacter::CollisionCheck()
 {
     cBodyBox** bodyBoxes;
-    int bodyBoxCount = m_AnimPlayer->GetCurrentAnimation()->GetSprite(m_AnimPlayer->GetCurrentFrame())->GetBodyBoxes(bodyBoxes);
+    cCharacterSprite* curSprite = GetCurrentSprite();
+    int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
     RECT bodyRectForGround = m_BodyBoxes[0];
     bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom();
 
@@ -315,11 +328,30 @@ void cCharacter::CollisionCheck()
 
     for (auto& iter : OBJECT->GetObjects(Obj_Character))
     {
-        if (iter == GetOwner())
-            continue;
         cCharacter* other = iter->GetComponent<cCharacter>();
+        if (m_Team == other->GetTeam())
+            continue;
+        
         if (IntersectRect(&overlapped, &m_BodyBoxes[0], &other->GetBodyBoxes()[0]))
             OnCollisionWithCharacter(other, m_BodyBoxes[0], overlapped);
+
+        if (!Contains<int>(*m_AttackedCharacters.GetValue(), iter->GetUID()))
+        {
+            for (int i = 0; i < m_HitBoxes.size(); i++)
+            {
+                for (int j = 0; j < other->GetHurtBoxes().size(); j++)
+                {
+                    if (IntersectRect(&overlapped, &m_HitBoxes[i], &other->GetHurtBoxes()[j]))
+                    {
+                        OnHit(other, other->GetCurrentSprite()->GetHurtBox(j), curSprite->GetHitBox(i), overlapped);
+                        other->OnHurt(this, other->GetCurrentSprite()->GetHurtBox(j), curSprite->GetHitBox(i), overlapped);
+                        goto out;
+                    }
+                }
+            }
+            out:
+            continue;
+        }
     }
 }
 
@@ -440,8 +472,11 @@ void cCharacter::Reset()
     m_AirActionLimit = m_Data->GetAirMovementLimit();
 }
 
-void cCharacter::AddVelocity(const Vec2& _vel)
+void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
 {
+    if (_reset)
+        m_Velocity = Vec2(0, 0);
+    
     if (m_Velocity.y == 0 && _vel.y != 0)
     {
         RemoveFlag(Flag::Standing);
