@@ -32,5 +32,5 @@ public:
         return m_Owner->GetComponent<T>();
     }
 
-    cObject* GetOwner() {return m_Owner;}
+    cObject* GetOwner() const {return m_Owner;}
 };

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "cSpriteBox.h"
+#include "../../cCharacter.h"
 
 enum class Guard : short
 {
@@ -57,4 +58,7 @@ public:
     short GetGrowthKnockBack() const {return m_GrowthKnockBack;}
     void SetGuard(Guard _guard) {m_Guard = _guard;}
     Guard GetGuard() const {return m_Guard;}
+
+    float CalculateKnockback(cCharacter* _from, cCharacter* _to, float _damageDealt) const;
+    float CalculateDamage(cCharacter* _from, cCharacter* _to) const;
 };

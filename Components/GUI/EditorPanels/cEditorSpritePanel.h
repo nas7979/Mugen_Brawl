@@ -19,7 +19,7 @@ enum OnionSkin
 };
     
 public:
-    cEditorSpritePanel(cObject* _owner) : cEditorPanel(_owner) {}
+    cEditorSpritePanel(cObject* _owner) : cEditorPanel(_owner), cMsgProcHandler(_owner) {}
     ~cEditorSpritePanel() override;
     void Init() override;
     void Update() override;

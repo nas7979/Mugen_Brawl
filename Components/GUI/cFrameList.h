@@ -4,7 +4,7 @@
 class cFrameList : public cGUI, cMsgProcHandler
 {
 public:
-    cFrameList(cObject* _owner) : cGUI(_owner) {}
+    cFrameList(cObject* _owner) : cGUI(_owner), cMsgProcHandler(_owner) {}
     ~cFrameList() override;
     void Init() override;
     void Update() override;

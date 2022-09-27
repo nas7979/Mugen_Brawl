@@ -147,7 +147,7 @@ void cInputManager::HandleWindowInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     for (auto handler : m_MsgProcHandlers)
     {
-        if (((cObject*)handler)->IsActive())
+        if (handler->MsgProcGetOwner()->IsActive())
             handler->MsgProc(uMsg, wParam, lParam);
     }
 }

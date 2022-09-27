@@ -29,7 +29,7 @@ public:
         DrawType type;
     };
 
-    cSpriteBoxArea(cObject* _owner) : cGUI(_owner) {}
+    cSpriteBoxArea(cObject* _owner) : cGUI(_owner), cMsgProcHandler(_owner) {}
     ~cSpriteBoxArea() override;
     void Init() override;
     void Update() override;

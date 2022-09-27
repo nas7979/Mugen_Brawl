@@ -5,7 +5,7 @@
 class cInputField : public cGUI, cMsgProcHandler
 {
 public:
-    cInputField(cObject* _owner) : cGUI(_owner) {}
+    cInputField(cObject* _owner) : cGUI(_owner), cMsgProcHandler(_owner) {}
     ~cInputField() override;
     void Init() override;
     void Update() override;

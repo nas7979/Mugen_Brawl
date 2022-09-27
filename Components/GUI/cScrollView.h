@@ -4,7 +4,7 @@
 class cScrollView : public cGUI, cMsgProcHandler
 {
 public:
-    cScrollView(cObject* _owner) : cGUI(_owner) {}
+    cScrollView(cObject* _owner) : cGUI(_owner), cMsgProcHandler(_owner) {}
     ~cScrollView() override;
     void Init() override;
     void Update() override;

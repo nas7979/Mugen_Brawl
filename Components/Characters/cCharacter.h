@@ -72,13 +72,16 @@ private:
     cCharacterData* m_Data = nullptr;
     int m_Flag;
     State m_State;
-    short m_AirActionLimit;
-    short m_JumpDir;
+    short m_HitStun;
+    BYTE m_AirActionLimit;
+    char m_JumpDir;
     BYTE m_PlayerIndex;
     BYTE m_Team;
     Vec2 m_Velocity;
     Vec2 m_Friction;
     float m_Damage;
+    float m_Weight;
+    float m_KnockbackDecPerFrame;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
@@ -92,6 +95,7 @@ private:
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
     bool CheckInputs();
     void Jump();
+    void SetState(State _state);
     
 public:
     cCharacterSprite* GetCurrentSprite() const {return m_AnimPlayer->GetCurrentSprite();}
@@ -99,6 +103,8 @@ public:
     short GetPlayerIndex() const {return m_PlayerIndex;}
     void SetTeam(BYTE _team) {m_Team = _team;}
     BYTE GetTeam() const {return m_Team;}
+    float GetDamage() const {return m_Damage;}
+    float GetWeight() const {return m_Weight;}
     
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);

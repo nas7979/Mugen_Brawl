@@ -19,7 +19,7 @@ void cCharacter::Update()
 {
     if (HasFlag(Flag::InAir))
     {
-        m_Velocity.y = min(m_Velocity.y + m_Data->GetWeight() / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
+        m_Velocity.y = min(m_Velocity.y + m_Weight / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
         if (m_State == State::Idle)
         {
             short fallSpeed = m_Data->GetFallSpeed();
@@ -158,7 +158,7 @@ void cCharacter::Update()
                 if (!HasFlag(Flag::InAir))
                 {
                     SetAnimation("PreJump");
-                    m_State = State::Action;   
+                    SetState(State::Action);
                 }
                 else
                 {
@@ -167,7 +167,35 @@ void cCharacter::Update()
             }
         }
     }
+    else if (m_State == State::Hit)
+    {
+        if (m_HitStun <= 0)
+        {
+            m_HitStun = 0;
+            SetState(State::Idle);
+        }
+        else
+        {
+            if (!HasFlag(Flag::InAir))
+            {
+                m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
+            }
+            else
+            {
+                m_Velocity.x *= 0.985 / (m_Weight * 0.01f);
+            }
+            m_HitStun--;
+        }
 
+        if (!HasFlag(Flag::InAir))
+        {
+            if (abs(m_Velocity.x) <= 0.1f)
+            {
+                m_Velocity.x = 0;
+            }
+        }
+    }
+    
     cCharacterSprite* curSprite = m_AnimPlayer->GetCurrentSprite();
     m_Velocity.x *= curSprite->GetFriction().x;
     m_Velocity.y *= curSprite->GetFriction().y;
@@ -207,26 +235,40 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
         return;
     }
 
+    if (m_State == State::Idle || key == "Hit_Ground")
+        return;
+
     if (key == "PreJump")
     {
         Jump();
         return;
     }
 
-    m_State = State::Idle;
+    SetState(State::Idle);
     m_AttackedCharacters.GetValue()->clear();
 }
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)
 {
+    int xDir = Sign(_by->m_Owner->GetScale().x);
+    SetDirection(-xDir);
+    
+    float damage = _enemyHitBox->CalculateDamage(_by, this);
+    m_Damage += damage;
+    
+    float radDir = D3DXToRadian(_enemyHitBox->GetDirection());
+    Vec2 dirVec = Vec2(cos(radDir) * xDir, sin(radDir));
+    float knockBack = _enemyHitBox->CalculateKnockback(_by, this, damage);
+    
+    m_HitStun = 6 + ceil(knockBack * 0.03f * _enemyHitBox->GetHitStunMul());
+    m_KnockbackDecPerFrame = knockBack / (m_HitStun * (m_HitStun - 6));
+    AddVelocity(dirVec * (dirVec.y != 0 || HasFlag(Flag::InAir) ? sqrt(knockBack) * 2 : knockBack / (m_HitStun - 6)), true);
+
+    SetState(State::Hit);
 }
 
 void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect)
 {
-    float radDir = D3DXToRadian(_myHitBox->GetDirection());
-    Vec2 dirVec = Vec2(cos(radDir) * Sign(m_Owner->GetScale().x), sin(radDir));
-    float knockBack = (_myHitBox->GetBaseKnockBack() + _myHitBox->GetGrowthKnockBack()) / 60.f;
-    _to->AddVelocity(dirVec * knockBack);
     m_AttackedCharacters.GetValue()->push_back(_to->GetOwner()->GetUID());
 }
 
@@ -269,7 +311,7 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
         RemoveFlag(Flag::Dashing);
         m_Velocity = Vec2(0, 0);
         SetAnimation("Land");
-        m_State = State::Action;
+        SetState(State::Action);
         m_AirActionLimit = m_Data->GetAirMovementLimit();
     }
 }
@@ -377,7 +419,7 @@ bool cCharacter::CheckInputs()
     {
         if (INPUT->CheckInputBuffer(command, this))
         {
-            m_State = State::Action;
+            SetState(State::Action);
             SetAnimation(command);
 
             cSoundSet* soundSet = m_Data->GetSoundSet(command);
@@ -413,7 +455,7 @@ bool cCharacter::CheckInputs()
 
     if (normalInput[1] != 0)
     {
-        m_State = State::Action;
+        SetState(State::Action);
         SetAnimation(normalInput);
         if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex))
             SetDirection(-1);
@@ -448,7 +490,29 @@ void cCharacter::Jump()
     RemoveFlag(Flag::Dashing);
     RemoveFlag(Flag::FastFall);
     AddFlag(Flag::InAir);
-    m_State = State::Idle;
+    SetState(State::Idle);
+}
+
+void cCharacter::SetState(State _state)
+{
+    State prevState = m_State;
+    switch (_state)
+    {
+    case State::Hit:
+        {
+            if (HasFlag(Flag::InAir))
+            {
+                
+            }
+            else
+            {
+                SetAnimation("Hit_Ground");
+            }
+            break;
+        }
+    }
+
+    m_State = _state;
 }
 
 void cCharacter::SetData(cCharacterData* _data)
@@ -465,11 +529,14 @@ void cCharacter::SetPalette(int _index)
 void cCharacter::Reset()
 {
     m_Flag = 0;
-    m_State = State::Idle;
+    SetState(State::Idle);
     m_Damage = 0;
     m_Friction = Vec2(1, 1);
     m_Velocity = Vec2(0, 0);
     m_AirActionLimit = m_Data->GetAirMovementLimit();
+    m_Weight = m_Data->GetWeight();
+    m_HitStun = 0;
+    m_KnockbackDecPerFrame = 0;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
