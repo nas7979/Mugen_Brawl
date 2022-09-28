@@ -10,6 +10,7 @@ class cCharacterData;
 
 class cCharacter : public cComponent, Serializer, cCharacterEventHandler
 {
+public:
     enum class State : short
     {
         Idle,
@@ -77,6 +78,8 @@ private:
     char m_JumpDir;
     BYTE m_PlayerIndex;
     BYTE m_Team;
+    short m_HitStop;
+    short m_canCancel;
     Vec2 m_Velocity;
     Vec2 m_Friction;
     float m_Damage;
@@ -93,18 +96,20 @@ private:
 
     void SetAnimation(const std::string& _key) const {m_AnimPlayer->SetAnimation(m_Data->GetAnimation(_key));}
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
-    bool CheckInputs();
+    bool CheckInputs(std::string* _cancelTable);
     void Jump();
     void SetState(State _state);
     
 public:
     cCharacterSprite* GetCurrentSprite() const {return m_AnimPlayer->GetCurrentSprite();}
-    void SetPlayerIndex(int _index) {m_PlayerIndex = _index;}
+    void SetPlayerIndex(int _index) {m_PlayerIndex = _index; GAME->SetCharacter(this, _index);}
     short GetPlayerIndex() const {return m_PlayerIndex;}
     void SetTeam(BYTE _team) {m_Team = _team;}
     BYTE GetTeam() const {return m_Team;}
     float GetDamage() const {return m_Damage;}
     float GetWeight() const {return m_Weight;}
+    void SetHitStop(int _hitStop) {m_HitStop = _hitStop;}
+    int GetHitStop() const {return m_HitStop;}
     
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);
@@ -121,3 +126,4 @@ public:
     const std::vector<RECT>& GetHitBoxes() const {return m_HitBoxes;}
     const std::vector<RECT>& GetThrowBoxes() const {return m_ThrowBoxes;}
 };
+

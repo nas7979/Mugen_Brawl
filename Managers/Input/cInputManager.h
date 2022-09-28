@@ -62,7 +62,7 @@ private:
     unsigned char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
     unsigned char m_GameInputBindings2P[16] {VK_UP, VK_LEFT, VK_DOWN, VK_RIGHT, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_OEM_PLUS, VK_NUMPAD6, };
     char m_GameInputToNotations[16] {'8', '4', '2', '6', 'a', 'b', 'c', 'd', 'r', };
-    char m_GameInputBufferedFrame[16] {12, 12, 12, 12, 4, 4, 4, -1, -1, };
+    char m_GameInputBufferedFrame[16] {6, 12, 12, 12, 4, 4, 4, -1, -1, };
     short m_GameInputPressTimer[MAX_PLAYER][16] {{0, }, };
 
 public:

@@ -23,6 +23,7 @@ void cInputManager::Update()
 
     for (int playerIndex = 0; playerIndex < MAX_PLAYER; playerIndex++)
     {
+        cCharacter* character = GAME->GetCharacter(playerIndex);
         std::vector<InputData>& inputBuffer = m_InputBuffer[playerIndex];
         std::string& stringInputBuffer = m_StringInputBuffer[playerIndex];
         short& gameInput = m_GameInput[playerIndex];
@@ -60,12 +61,17 @@ void cInputManager::Update()
                 m_GameInputPressTimer[playerIndex][i]++;
                 gameInput |= bitMask;
 
+                // if (i == (int)IngameInput::Up && (prevGameInput & bitMask) != 0 && inputBuffer.empty())
+                // {
+                //     
+                // }
+
                 if ((prevGameInput & bitMask) == 0)
                 {
                     if (lastInput->input == (IngameInput)i && lastInput->pressedAt + m_GameInputBufferedFrame[i] <= FRAME_TIMER)
                         lastInput->removeTimer = 0;
                 
-                    inputBuffer.emplace_back((IngameInput)i, m_GameInputBufferedFrame[i] > 10 ? -1 : m_GameInputBufferedFrame[i], FRAME_TIMER);
+                    inputBuffer.emplace_back((IngameInput)i, m_GameInputBufferedFrame[i] > 5 ? -1 : m_GameInputBufferedFrame[i], FRAME_TIMER);
                     if (inputBuffer.size() > 10)
                         inputBuffer.erase(inputBuffer.begin());
                 }
@@ -75,8 +81,11 @@ void cInputManager::Update()
                 m_GameInputPressTimer[playerIndex][i] = 0;
             }
         }
-
+        
         stringInputBuffer.clear();
+        if (character == nullptr || character->GetHitStop() > 0)
+            continue;
+        
         for (auto iter = inputBuffer.begin(); iter != inputBuffer.end();)
         {
             if ((*iter).removeTimer < 0)

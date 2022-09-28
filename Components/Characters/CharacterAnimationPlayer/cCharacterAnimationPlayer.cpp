@@ -31,6 +31,9 @@ void cCharacterAnimationPlayer::Update()
     m_Renderer->SetTexture(sprite->GetTexture());
     m_Renderer->SetOffset(sprite->GetOffset());
 
+    if (m_Character->GetHitStop() > 0)
+        return;
+
     m_FrameTimer += m_Speed;
     if (m_FrameTimer >= sprite->GetFrameLength())
     {

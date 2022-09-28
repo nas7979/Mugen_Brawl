@@ -17,6 +17,26 @@ void cCharacter::Init()
 
 void cCharacter::Update()
 {
+    if (m_HitStop > 0)
+    {
+        m_HitStop--;
+        return;
+    }
+
+    if (m_canCancel && GetCurrentSprite()->FindEventKey("CA"))
+    {
+        std::string cancelTable;
+        if (m_AnimPlayer->GetCurrentAnimation()->FindEventKey("CancelInto", &cancelTable))
+        {
+            if (CheckInputs(&cancelTable))
+            {
+                m_AttackedCharacters.GetValue()->clear();
+                m_canCancel = false;
+                return;
+            }
+        }
+    }
+    
     if (HasFlag(Flag::InAir))
     {
         m_Velocity.y = min(m_Velocity.y + m_Weight / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
@@ -97,7 +117,7 @@ void cCharacter::Update()
         }
         
         
-        if (CheckInputs())
+        if (CheckInputs(nullptr))
         {
             return;
         }
@@ -147,25 +167,6 @@ void cCharacter::Update()
                 SetAnimation("Crouch");
             }
         }
-
-        if (m_AirActionLimit > 0)
-        {
-            if (INPUT->CheckInputBuffer("8", this))
-            {
-                INPUT->ClearInputBuffer(m_PlayerIndex);
-                m_AirActionLimit--;
-                m_JumpDir = isLeftPressed ? -1 : isRightPressed ? 1 : 0;
-                if (!HasFlag(Flag::InAir))
-                {
-                    SetAnimation("PreJump");
-                    SetState(State::Action);
-                }
-                else
-                {
-                    Jump();
-                }
-            }
-        }
     }
     else if (m_State == State::Hit)
     {
@@ -182,7 +183,7 @@ void cCharacter::Update()
             }
             else
             {
-                m_Velocity.x *= 0.985 / (m_Weight * 0.01f);
+                m_Velocity.x *= 0.975 / (m_Weight * 0.01f);
             }
             m_HitStun--;
         }
@@ -205,6 +206,15 @@ void cCharacter::Update()
 
 void cCharacter::Render()
 {
+    if (m_HitStop > 0)
+    {
+        if (m_State == State::Hit)
+        {
+            Vec2 originOffset = GetCurrentSprite()->GetOffset();
+            originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * pow(4 + m_HitStop * 0.75f, 1.75);
+            GetComponent<cRenderer>()->SetOffset(originOffset);
+        }
+    }
 }
 
 void cCharacter::Release()
@@ -261,7 +271,14 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
     float knockBack = _enemyHitBox->CalculateKnockback(_by, this, damage);
     
     m_HitStun = 6 + ceil(knockBack * 0.03f * _enemyHitBox->GetHitStunMul());
+    
+    std::string fixedHitStop;
+    _enemyHitBox->FindEventKey("HitStop", &fixedHitStop);
+    m_HitStop = fixedHitStop.empty() ? min(8 + ceil(sqrt(pow(_enemyHitBox->GetDamage(), 1.75f)) * 0.5f), 16) : atoi(fixedHitStop.c_str());
+    _by->SetHitStop(m_HitStop);
+    
     m_KnockbackDecPerFrame = knockBack / (m_HitStun * (m_HitStun - 6));
+    
     AddVelocity(dirVec * (dirVec.y != 0 || HasFlag(Flag::InAir) ? sqrt(knockBack) * 2 : knockBack / (m_HitStun - 6)), true);
 
     SetState(State::Hit);
@@ -269,6 +286,7 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
 
 void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect)
 {
+    m_canCancel = true;
     m_AttackedCharacters.GetValue()->push_back(_to->GetOwner()->GetUID());
 }
 
@@ -354,19 +372,8 @@ void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& 
 
 void cCharacter::CollisionCheck()
 {
-    cBodyBox** bodyBoxes;
-    cCharacterSprite* curSprite = GetCurrentSprite();
-    int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
-    RECT bodyRectForGround = m_BodyBoxes[0];
-    bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom();
-
     RECT overlapped;
-    for (auto& iter : OBJECT->GetObjects(Obj_Map))
-    {
-        cBlock* block = iter->GetComponent<cBlock>();
-        if (IntersectRect(&overlapped, &bodyRectForGround, &block->GetRect()))
-            OnCollisionWithMap(block, bodyRectForGround, overlapped);
-    }
+    cCharacterSprite* curSprite = GetCurrentSprite();
 
     for (auto& iter : OBJECT->GetObjects(Obj_Character))
     {
@@ -395,6 +402,21 @@ void cCharacter::CollisionCheck()
             continue;
         }
     }
+
+    if (m_HitStop <= 0)
+    {
+        cBodyBox** bodyBoxes;
+        int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
+        RECT bodyRectForGround = m_BodyBoxes[0];
+        bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom();
+
+        for (auto& iter : OBJECT->GetObjects(Obj_Map))
+        {
+            cBlock* block = iter->GetComponent<cBlock>();
+            if (IntersectRect(&overlapped, &bodyRectForGround, &block->GetRect()))
+                OnCollisionWithMap(block, bodyRectForGround, overlapped);
+        }   
+    }
 }
 
 void cCharacter::Serialize(char* _buffer, UINT& _pointer) const
@@ -410,27 +432,30 @@ size_t cCharacter::GetSize() const
     return 0;
 }
 
-bool cCharacter::CheckInputs()
+bool cCharacter::CheckInputs(std::string* _cancelTable)
 {
     if (INPUT->GetInputBufferSize(m_PlayerIndex) == 0)
         return false;
 
-    for (auto& command : m_Data->GetCommands())
+    if (_cancelTable == nullptr || _cancelTable->find("SP") != std::string::npos)
     {
-        if (INPUT->CheckInputBuffer(command, this))
+        for (auto& command : m_Data->GetCommands())
         {
-            SetState(State::Action);
-            SetAnimation(command);
-
-            cSoundSet* soundSet = m_Data->GetSoundSet(command);
-            if (soundSet != nullptr)
+            if (INPUT->CheckInputBuffer(command, this))
             {
-                cSound* sound = soundSet->PickSound();
-                SOUND->Play(sound->GetSound(), sound->GetVolume());
-            }
+                SetState(State::Action);
+                SetAnimation(command);
 
-            INPUT->ClearInputBuffer(m_PlayerIndex);
-            return true;
+                cSoundSet* soundSet = m_Data->GetSoundSet(command);
+                if (soundSet != nullptr)
+                {
+                    cSound* sound = soundSet->PickSound();
+                    SOUND->Play(sound->GetSound(), sound->GetVolume());
+                }
+
+                INPUT->ClearInputBuffer(m_PlayerIndex);
+                return true;
+            }
         }
     }
 
@@ -444,7 +469,7 @@ bool cCharacter::CheckInputs()
         normalInput[0] = '5';
         if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) || INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
             normalInput[0] = '6';
-        if (HasFlag(Flag::Crouching))
+        if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
             normalInput[0] = '2';   
     }
     
@@ -453,7 +478,7 @@ bool cCharacter::CheckInputs()
     if (lastInputBufferChar == IngameInput::B) normalInput[1] = 'b';
     if (lastInputBufferChar == IngameInput::A) normalInput[1] = 'a';
 
-    if (normalInput[1] != 0)
+    if (normalInput[1] != 0 && (_cancelTable == nullptr || _cancelTable->find(normalInput) != std::string::npos))
     {
         SetState(State::Action);
         SetAnimation(normalInput);
@@ -471,10 +496,36 @@ bool cCharacter::CheckInputs()
         return true;
     }
 
-    if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
+    if (_cancelTable == nullptr || _cancelTable->find("Dash") != std::string::npos)
     {
-        AddFlag(Flag::Dashing);
-        return false;
+        if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
+        {
+            AddFlag(Flag::Dashing);
+            if (m_State != State::Idle)
+                SetState(State::Idle);
+            return false;
+        }
+    }
+
+    if (m_AirActionLimit > 0 && (_cancelTable == nullptr || _cancelTable->find("Jump") != std::string::npos))
+    {
+        if (INPUT->CheckInputBuffer("8", this))
+        {
+            m_AirActionLimit--;
+            m_JumpDir = INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) ? -1 : INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex) ? 1 : 0;
+            if (!HasFlag(Flag::InAir))
+            {
+                SetAnimation("PreJump");
+                SetState(State::Action);
+            }
+            else
+            {
+                Jump();
+            }
+
+            INPUT->ClearInputBuffer(m_PlayerIndex);
+            return true;
+        }
     }
 
     return false;
@@ -512,6 +563,8 @@ void cCharacter::SetState(State _state)
         }
     }
 
+    m_AttackedCharacters.GetValue()->clear();
+    m_canCancel = false;
     m_State = _state;
 }
 
@@ -537,6 +590,8 @@ void cCharacter::Reset()
     m_Weight = m_Data->GetWeight();
     m_HitStun = 0;
     m_KnockbackDecPerFrame = 0;
+    m_HitStop = 0;
+    m_canCancel = false;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
