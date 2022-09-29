@@ -11,6 +11,9 @@
 *.pdb
 *.pch
 *.lik
+*.ilk
+*.idb
+*.log
 
 
 # Precompiled Headers
@@ -39,5 +42,3 @@
 # Fordlers
 .idea/
 .vs/
-Debug/
-Release/
