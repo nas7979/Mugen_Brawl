@@ -177,14 +177,7 @@ void cCharacter::Update()
         }
         else
         {
-            if (!HasFlag(Flag::InAir))
-            {
-                m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
-            }
-            else
-            {
-                m_Velocity.x *= 0.975 / (m_Weight * 0.01f);
-            }
+            m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
             m_HitStun--;
         }
 
@@ -211,7 +204,7 @@ void cCharacter::Render()
         if (m_State == State::Hit)
         {
             Vec2 originOffset = GetCurrentSprite()->GetOffset();
-            originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * pow(4 + m_HitStop * 0.75f, 1.75);
+            originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
             GetComponent<cRenderer>()->SetOffset(originOffset);
         }
     }
@@ -270,16 +263,16 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
     Vec2 dirVec = Vec2(cos(radDir) * xDir, sin(radDir));
     float knockBack = _enemyHitBox->CalculateKnockback(_by, this, damage);
     
-    m_HitStun = 6 + ceil(knockBack * 0.03f * _enemyHitBox->GetHitStunMul());
+    m_HitStun = 8 + ceil(knockBack * 0.015f * _enemyHitBox->GetHitStunMul());
     
     std::string fixedHitStop;
     _enemyHitBox->FindEventKey("HitStop", &fixedHitStop);
     m_HitStop = fixedHitStop.empty() ? min(8 + ceil(sqrt(pow(_enemyHitBox->GetDamage(), 1.75f)) * 0.5f), 16) : atoi(fixedHitStop.c_str());
     _by->SetHitStop(m_HitStop);
     
-    m_KnockbackDecPerFrame = knockBack / (m_HitStun * (m_HitStun - 6));
+    m_KnockbackDecPerFrame = (knockBack * abs(dirVec.x) / (m_HitStun * (m_HitStun * 0.5f))) * (dirVec.y != 0 || HasFlag(Flag::InAir) ? 0.5f : 1);
     
-    AddVelocity(dirVec * (dirVec.y != 0 || HasFlag(Flag::InAir) ? sqrt(knockBack) * 2 : knockBack / (m_HitStun - 6)), true);
+    AddVelocity(Vec2(dirVec.x * knockBack / (m_HitStun * 0.5f), dirVec.y * sqrt(knockBack) * 2), true);
 
     SetState(State::Hit);
 }
