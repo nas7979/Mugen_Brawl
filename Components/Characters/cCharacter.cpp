@@ -460,8 +460,8 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
     else
     {
         normalInput[0] = '5';
-        if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) || INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
-            normalInput[0] = '6';
+        // if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) || INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
+        //     normalInput[0] = '6';
         if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
             normalInput[0] = '2';   
     }
@@ -493,10 +493,25 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
     {
         if (!HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
         {
-            AddFlag(Flag::Dashing);
-            if (m_State != State::Idle)
-                SetState(State::Idle);
-            return false;
+            if (HasFlag(Flag::InAir))
+            {
+                if (m_AirActionLimit > 0)
+                {
+                    m_AirActionLimit--;
+                    SetAnimation("AirDash");
+                    SetState(State::Action);
+                    AddVelocity(Vec2(35 * Sign(m_Owner->GetScale().x), -m_Weight / 50.f), true);
+                    return false;
+                }
+            }
+            else
+            {
+                AddFlag(Flag::Dashing);
+                if (m_State != State::Idle)
+                    SetState(State::Idle);
+
+                return false;
+            }
         }
     }
 
