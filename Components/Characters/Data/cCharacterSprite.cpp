@@ -89,8 +89,8 @@ bool cCharacterSprite::SetTexture(std::wstring _path, PALETTEENTRY* _paletteEntr
 
     int usedPaletteLength = 255;
     UINT white = 0xff000000;
-    if (memcmp(&entries[1], &white, sizeof(int)) != 0)
-        _paletteEntries = entries;
+    // if (memcmp(&entries[1], &white, sizeof(int)) != 0)
+    //     _paletteEntries = entries;
     
     for (usedPaletteLength = 255; usedPaletteLength >= 0; usedPaletteLength--)
     {

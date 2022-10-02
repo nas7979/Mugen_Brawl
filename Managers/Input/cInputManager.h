@@ -85,6 +85,8 @@ public:
     short GetGameInputPressTimer(IngameInput _input, short _playerIndex) const {return m_GameInputPressTimer[_playerIndex][(short)_input];}
     int GetInputBufferSize(short _playerIndex) const {return m_InputBuffer[_playerIndex].size();}
     IngameInput GetLastBufferedInput(short _playerIndex) const {return m_InputBuffer[_playerIndex][m_InputBuffer[_playerIndex].size() - 1].input;}
+    void RemoveInputBuffer(int _index, short _playerIndex) {m_InputBuffer[_playerIndex].erase(m_InputBuffer[_playerIndex]._Make_iterator_offset(_index));}
+    void RemoveInputBuffer(IngameInput _input, short _playerIndex);
 };
 
 #define INPUT cInputManager::GetInstance()

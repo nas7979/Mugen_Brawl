@@ -73,6 +73,7 @@ public:
 
     void SetPalette(cPalette* _palette);
     cPalette* GetPalette(int _index);
+    cPalette* GetPaletteByArrayIndex(int _index);
     void RemovePalette(int _index);
     int GetPaletteCount() {return m_Palettes.GetLength();}
     void SetPaletteSize(int _size) {m_PaletteLength = _size;}

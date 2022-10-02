@@ -2,7 +2,7 @@
 
 class cComponent;
 
-enum ObjectTag
+enum ObjectTag : short
 {
     Obj_Character,
     Obj_Map,
@@ -45,8 +45,9 @@ private:
     float m_Rot = 0;
     bool m_IsActive = true;
     bool m_IsDestroyed = false;
-    std::string m_Name;
     ObjectTag m_Tag = Obj_None;
+    int m_CreatedAt;
+    SerializedString m_Name;
     std::vector<cComponent*> m_Components;
     std::vector<Alarm> m_Alarms;
 
@@ -62,6 +63,8 @@ public:
     bool IsActive() {return m_IsActive;}
     void Destroy() {m_IsDestroyed = true;}
     bool IsDestroyed() {return m_IsDestroyed;}
+    void SetCreatedAt(int _frame) {m_CreatedAt = _frame;}
+    int GetCreatedAt() const {return m_CreatedAt;}
     void SetName(std::string _name) {m_Name = _name;}
     std::string GetName() {return m_Name;}
     ObjectTag GetTag() {return m_Tag;}

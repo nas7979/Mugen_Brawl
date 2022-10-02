@@ -70,7 +70,7 @@ public:
     short GetFrameLength() {return m_FrameLength;}
     void SetFrameLength(short _length) {m_FrameLength = _length;}
     void SetFixedPaletteIndex(short _index) {m_FixedPaletteIndex = _index;}
-    bool GetFixedPaletteIndex() {return m_FixedPaletteIndex;}
+    short GetFixedPaletteIndex() {return m_FixedPaletteIndex;}
     ShortVec2 GetMomentum() {return m_Momentum;}
     void SetMomentum(ShortVec2 _momentum) {m_Momentum = _momentum;}
     Vec2 GetFriction() {return m_Friction;}

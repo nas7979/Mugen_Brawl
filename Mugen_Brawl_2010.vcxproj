@@ -389,6 +389,7 @@
     <ClCompile Include="Components\Characters\cCharacter.cpp" />
     <ClCompile Include="Components\Characters\cCharacterEventHandler.cpp" />
     <ClCompile Include="Components\Characters\CharacterAnimationPlayer\cCharacterAnimationPlayer.cpp" />
+    <ClCompile Include="Components\Characters\CharacterEffect\cCharacterEffect.cpp" />
     <ClCompile Include="Components\Characters\cTestChar.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterAnimation.cpp" />
     <ClCompile Include="Components\Characters\Data\cCharacterData.cpp" />
@@ -555,6 +556,7 @@
     <ClInclude Include="Components\Characters\cCharacter.h" />
     <ClInclude Include="Components\Characters\cCharacterEventHandler.h" />
     <ClInclude Include="Components\Characters\CharacterAnimationPlayer\cCharacterAnimationPlayer.h" />
+    <ClInclude Include="Components\Characters\CharacterEffect\cCharacterEffect.h" />
     <ClInclude Include="Components\Characters\cTestChar.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterAnimation.h" />
     <ClInclude Include="Components\Characters\Data\cCharacterData.h" />

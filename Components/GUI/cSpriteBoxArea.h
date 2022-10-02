@@ -60,8 +60,10 @@ private:
     void AddBox(DrawType _type, T* _box);
     template<typename T>
     void UndoAddBox(DrawType _type);
-    
-    D3DCOLOR GetBoxColor(DrawType _type, bool _isSelected);
+
+public:
+    D3DCOLOR static GetBoxColor(DrawType _type, bool _isSelected);
+private:
     void WithBoxes(const std::function<void(cSpriteBox*, DrawType)>& _func);
     int GetBoxIndex(SelectedBox _box);
 

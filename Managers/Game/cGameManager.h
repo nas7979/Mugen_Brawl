@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+class cCharacter;
+
 class cGameManager : public cSingleton<cGameManager>
 {
 public:

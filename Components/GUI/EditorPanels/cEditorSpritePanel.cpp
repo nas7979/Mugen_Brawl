@@ -50,7 +50,7 @@ void cEditorSpritePanel::Init()
         m_HexColorField->GetOwner()->SetPos(_selected->GetPos() + Vec3(size.x * 0.5f, size.y * 0.5f, -0.2f));
         
         m_SelectedPaletteEntryIndex = m_PaletteScrollView->GetSelectedIndex();
-        m_HexColorField->SetText(IntToHex(m_Data->GetPalette(m_CurPalette)->GetColor(m_SelectedPaletteEntryIndex)));
+        m_HexColorField->SetText(IntToHex(m_Data->GetPaletteByArrayIndex(m_CurPalette)->GetColor(m_SelectedPaletteEntryIndex)));
     }, true);
     m_PaletteScrollView->SetResetSelectedOnClickOutSide(true);
 
@@ -61,7 +61,7 @@ void cEditorSpritePanel::Init()
             return;
 
         int color = HexToInt(_this->GetText());
-        cPalette* palette = m_Data->GetPalette(m_CurPalette);
+        cPalette* palette = m_Data->GetPaletteByArrayIndex(m_CurPalette);
         palette->SetColor(m_SelectedPaletteEntryIndex, color >> 24, color >> 16, color >> 8, color);
         ReloadPaletteList(false);
         palette->UpdateTexture();
@@ -209,26 +209,15 @@ void cEditorSpritePanel::Init()
         });
     });
     m_HitBoxFields.push_back(m_HitBoxDamageField->GetOwner());
-
-    m_HitBoxDirectionField = CreateInputField(Vec2(1920 - 85, 700), Vec2(100, 40), "Direction", 24, false);
-    m_HitBoxDirectionField->SetOnTextChanged([&](cInputField* _this)->void
-    {
-        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
-        {
-            ((cHitBox*)_selected.box)->SetDirection(_this->GetInt());
-        });
-    });
-    m_HitBoxFields.push_back(m_HitBoxDirectionField->GetOwner());
     
-    m_HitBoxHitStunMulField = CreateInputField(Vec2(1920 - 295, 780), Vec2(100, 40), "HitStun Mul", 24, false);
-    m_HitBoxHitStunMulField->SetOnTextChanged([&](cInputField* _this)->void
-    {
-        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
-        {
-            ((cHitBox*)_selected.box)->SetHitStunMul(_this->GetFloat());
-        });
-    });
-    m_HitBoxFields.push_back(m_HitBoxHitStunMulField->GetOwner());
+    m_HitBoxGuardDropDown = CreateDropDown(Vec2(1920 - 85, 700), Vec2(100, 40), 100, "Mid", false)
+    ->SetDropDownHeight(30)
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[0], [&]()->void{SetHitBoxGuard(Guard::Low);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[1], [&]()->void{SetHitBoxGuard(Guard::Mid);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[2], [&]()->void{SetHitBoxGuard(Guard::High);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[3], [&]()->void{SetHitBoxGuard(Guard::All);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[4], [&]()->void{SetHitBoxGuard(Guard::Unblockable);}, false));
+    m_HitBoxFields.push_back(m_HitBoxGuardDropDown->GetOwner());
 
     m_HitBoxShieldStunMulField = CreateInputField(Vec2(1920 - 190, 780), Vec2(100, 40), "ShieldStun Mul", 24, false);
     m_HitBoxShieldStunMulField->SetOnTextChanged([&](cInputField* _this)->void
@@ -250,6 +239,26 @@ void cEditorSpritePanel::Init()
     });
     m_HitBoxFields.push_back(m_HitBoxShieldDamageMulField->GetOwner());
     
+    m_HitBoxHitStunMulField = CreateInputField(Vec2(1920 - 400, 860), Vec2(100, 40), "HitStun Mul", 24, false);
+    m_HitBoxHitStunMulField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetHitStunMul(_this->GetFloat());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxHitStunMulField->GetOwner());
+    
+    m_HitBoxDirectionField = CreateInputField(Vec2(1920 - 295, 860), Vec2(100, 40), "Direction", 24, false);
+    m_HitBoxDirectionField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetDirection(_this->GetInt());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxDirectionField->GetOwner());
+    
     m_HitBoxBaseKnockBackField = CreateInputField(Vec2(1920 - 190, 860), Vec2(100, 40), "Base KnockBack", 24, false);
     m_HitBoxBaseKnockBackField->SetOnTextChanged([&](cInputField* _this)->void
     {
@@ -269,15 +278,46 @@ void cEditorSpritePanel::Init()
         });
     });
     m_HitBoxFields.push_back(m_HitBoxGrowthKnockBackField->GetOwner());
+
+    m_HitBoxAirHitStunMulField = CreateInputField(Vec2(1920 - 400, 940), Vec2(100, 40), "Air HitStun Mul", 24, false);
+    m_HitBoxAirHitStunMulField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetAirHitStunMul(_this->GetFloat());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxAirHitStunMulField->GetOwner());
+
+    m_HitBoxAirDirectionField = CreateInputField(Vec2(1920 - 295, 940), Vec2(100, 40), "Air Direction", 24, false);
+    m_HitBoxAirDirectionField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetAirDirection(_this->GetInt());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxAirDirectionField->GetOwner());
     
-    m_HitBoxGuardDropDown = CreateDropDown(Vec2(1920 - 295, 860), Vec2(100, 40), 100, "Mid", false)
-    ->SetDropDownHeight(30)
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[0], [&]()->void{SetHitBoxGuard(Guard::Low);}, false))
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[1], [&]()->void{SetHitBoxGuard(Guard::Mid);}, false))
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[2], [&]()->void{SetHitBoxGuard(Guard::High);}, false))
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[3], [&]()->void{SetHitBoxGuard(Guard::All);}, false))
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[4], [&]()->void{SetHitBoxGuard(Guard::Unblockable);}, false));
-    m_HitBoxFields.push_back(m_HitBoxGuardDropDown->GetOwner());
+    m_HitBoxAirBaseKnockBackField = CreateInputField(Vec2(1920 - 190, 940), Vec2(100, 40), "Air Base KnockBack", 24, false);
+    m_HitBoxAirBaseKnockBackField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetAirBaseKnockBack(_this->GetInt());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxAirBaseKnockBackField->GetOwner());
+
+    m_HitBoxAirGrowthKnockBackField = CreateInputField(Vec2(1920 - 85, 940), Vec2(100, 40), "Air Growth KnockBack", 24, false);
+    m_HitBoxAirGrowthKnockBackField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cHitBox*)_selected.box)->SetAirGrowthKnockBack(_this->GetInt());
+        });
+    });
+    m_HitBoxFields.push_back(m_HitBoxAirGrowthKnockBackField->GetOwner());
 
     m_ThrowBoxCanThrowMidairField = CreateInputField(Vec2(1920 - 85, 700), Vec2(100, 40), "Can Throw Midair", 24, false);
     m_ThrowBoxCanThrowMidairField->SetOnTextChanged([&](cInputField* _this)->void
@@ -351,7 +391,7 @@ void cEditorSpritePanel::Render()
         Vec3 pos;
         scale = m_Data->GetSpriteScale();
 
-        cPalette* palette = m_Data->GetPalette(m_CurPalette);
+        cPalette* palette = m_Data->GetPaletteByArrayIndex(m_CurPalette);
         if (palette != nullptr)
         {
             IMAGE->BeginPaletteSwapShader();
@@ -475,7 +515,7 @@ void cEditorSpritePanel::OnClickOpenImage()
     if (m_FrameList->GetAnimation() == nullptr)
         return;
 
-    if (m_Data->GetPalette(m_CurPalette) == nullptr)
+    if (m_Data->GetPaletteByArrayIndex(m_CurPalette) == nullptr)
     {
         MessageBoxA(DXUTGetHWND(), "Please Select Palette!", "ERROR!", 0);
         return;
@@ -494,7 +534,7 @@ void cEditorSpritePanel::OnClickOpenImage()
     {
         SetAnimationByKey(curAnimKey);
         PALETTEENTRY* entries;
-        m_Data->GetPalette(paletteIndex)->GetEntries(entries);
+        m_Data->GetPaletteByArrayIndex(paletteIndex)->GetEntries(entries);
         
         for(int i = 0; i < filePaths.size(); i++)
         {
@@ -610,7 +650,7 @@ void cEditorSpritePanel::ReloadPaletteList(bool _resetScrollPos)
     if (_resetScrollPos)
         m_PaletteScrollView->SetScrollPos(0);
 
-    cPalette* palette = m_Data->GetPalette(m_CurPalette);
+    cPalette* palette = m_Data->GetPaletteByArrayIndex(m_CurPalette);
     if (palette == nullptr)
         return;
     
@@ -626,7 +666,7 @@ void cEditorSpritePanel::ReloadPaletteList(bool _resetScrollPos)
 void cEditorSpritePanel::SetPaletteIndex(int _index)
 {
     m_CurPalette = _index;
-    cPalette* palette = m_Data->GetPalette(_index);
+    cPalette* palette = m_Data->GetPaletteByArrayIndex(_index);
     if (palette == nullptr)
         return;
     
@@ -821,19 +861,25 @@ void cEditorSpritePanel::OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::
     {
         cHitBox* box = (cHitBox*)_boxes[0].box;
         m_HitBoxDamageField->SetText(std::to_string(box->GetDamage()), false);
-        m_HitBoxDirectionField->SetText(std::to_string(box->GetDirection()), false);
+        m_HitBoxGuardDropDown->SetText(GuardToStringMap[(int)box->GetGuard()]);
         m_HitBoxHitStunMulField->SetText(std::to_string(box->GetHitStunMul()), false);
         m_HitBoxShieldStunMulField->SetText(std::to_string(box->GetShieldStunMul()), false);
         m_HitBoxShieldDamageMulField->SetText(std::to_string(box->GetShieldDamageMul()), false);
+        m_HitBoxDirectionField->SetText(std::to_string(box->GetDirection()), false);
         m_HitBoxBaseKnockBackField->SetText(std::to_string(box->GetBaseKnockBack()), false);
         m_HitBoxGrowthKnockBackField->SetText(std::to_string(box->GetGrowthKnockBack()), false);
-        m_HitBoxGuardDropDown->SetText(GuardToStringMap[(int)box->GetGuard()]);
+        m_HitBoxAirDirectionField->SetText(std::to_string(box->GetAirDirection()), false);
+        m_HitBoxAirBaseKnockBackField->SetText(std::to_string(box->GetAirBaseKnockBack()), false);
+        m_HitBoxAirGrowthKnockBackField->SetText(std::to_string(box->GetAirGrowthKnockBack()), false);
+        m_HitBoxAirHitStunMulField->SetText(std::to_string(box->GetAirHitStunMul()), false);
     }
     else if (_type == cSpriteBoxArea::ThrowBox)
     {
         cThrowBox* box = (cThrowBox*)_boxes[0].box;
         m_HitBoxDamageField->SetText(box->GetCanThrowMidair() ? "1" : "0", false);
     }
+
+    m_SpriteBoxEventKeyField->SetText(_boxes[0].box->GetEventKey(), false);
 }
 
 void cEditorSpritePanel::UnlinkRemovedOnionSkinSprites(cCharacterSprite* _spriteToRemove)

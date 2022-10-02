@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "cCharacterEventHandler.h"
 #include "CharacterAnimationPlayer/cCharacterAnimationPlayer.h"
+#include "CharacterEffect/cCharacterEffect.h"
 #include "Data/cCharacterAnimation.h"
 #include "Data/cCharacterData.h"
 
@@ -47,7 +48,8 @@ public:
     void Release() override;
     void OnCollision(cObject* _other) override;
     void OnAlarm(std::string _key) override;
-    virtual void OnAnimationEnd(cCharacterAnimation* _anim);
+    
+    void OnAnimationEnd(cCharacterAnimation* _anim) override;
 
     void OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect) override;
     void OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect) override;
@@ -56,6 +58,7 @@ public:
     void OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRect, const RECT& _overlapped) override;
     void OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const RECT& _overlapped) override;
 
+    void OnSpriteChanged(cCharacterSprite* _sprite) override;
     void HandleAnimationEvent(const std::string& _key, const std::string& _value) override;
     void HandleSpriteEvent(const std::string& _key, const std::string& _value) override;
     void HandleHurtBoxEvent(const std::string& _key, const std::string& _value) override;
@@ -93,8 +96,10 @@ private:
     std::vector<RECT> m_HitBoxes;
     std::vector<RECT> m_ThrowBoxes;
     SerializedVector<int> m_AttackedCharacters;
+    SerializedVector<cCharacterEffect*> m_AttachedEffects;
 
     void SetAnimation(const std::string& _key) const {m_AnimPlayer->SetAnimation(m_Data->GetAnimation(_key));}
+    void SetAnimationImmediately(const std::string& _key) const {m_AnimPlayer->SetAnimationImmediately(m_Data->GetAnimation(_key));}
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
     bool CheckInputs(std::string* _cancelTable);
     void Jump();
@@ -109,12 +114,13 @@ public:
     float GetDamage() const {return m_Damage;}
     float GetWeight() const {return m_Weight;}
     void SetHitStop(int _hitStop) {m_HitStop = _hitStop;}
-    int GetHitStop() const {return m_HitStop;}
+    int GetHitStop() const override {return m_HitStop;}
     
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);
     void Reset();
     void AddVelocity(const Vec2& _vel, bool _reset = false);
+    void RemoveAttachedEffect(cCharacterEffect* _effect);
 
     bool HasFlag(Flag _flag) const {return (m_Flag & (int)_flag) != 0;}
     bool AddFlag(Flag _flag) {return m_Flag |= (int)_flag;}

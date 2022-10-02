@@ -243,20 +243,46 @@ void cInputManager::ClearInputBuffer(short _playerIndex)
 
 bool cInputManager::CheckInputBuffer(std::string _command, cCharacter* _character)
 {
+    bool hasUp = false;
     if (Sign(_character->GetOwner()->GetScale().x) == -1)
     {
         for (int i = 0; i < _command.size(); i++)
         {
             if (_command[i] == '6')
                 _command[i] = '4';
+            else if (_command[i] == '8')
+                hasUp = true;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < _command.size(); i++)
+        {
+            if (_command[i] == '8')
+                hasUp = true;
         }
     }
 
     short playerIndex = _character->GetPlayerIndex();
-    size_t hasCommand = m_StringInputBuffer[playerIndex].find(_command);
+    std::string inputBuffer;
+    if (!hasUp)
+    {
+        const std::string& bufferRef = m_StringInputBuffer[playerIndex];
+        for (int i = 0; i < bufferRef.size(); i++)
+        {
+            if (bufferRef[i] != '8')
+                inputBuffer.push_back(bufferRef[i]);
+        }
+    }
+    else
+    {
+        inputBuffer = m_StringInputBuffer[playerIndex];
+    }
+
+    size_t hasCommand = inputBuffer.find(_command);
     if (hasCommand != std::string::npos)
     {
-        char inputDir = m_StringInputBuffer[playerIndex][hasCommand + _command.length() - 1];
+        char inputDir = inputBuffer[hasCommand + _command.length() - 1];
         if (inputDir == '4')
             _character->SetDirection(-1);
         else if (inputDir == '6')
@@ -270,4 +296,16 @@ bool cInputManager::CheckInputBuffer(std::string _command, cCharacter* _characte
     }
 
     return false;
+}
+
+void cInputManager::RemoveInputBuffer(IngameInput _input, short _playerIndex)
+{
+    std::vector<InputData>& bufferRef = m_InputBuffer[_playerIndex];
+    for (auto& iter = bufferRef.begin(); iter != bufferRef.end();)
+    {
+        if ((*iter).input == _input)
+            iter = bufferRef.erase(iter);
+        else
+            iter++;
+    }
 }

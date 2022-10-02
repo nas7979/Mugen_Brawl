@@ -25,7 +25,7 @@ void cRenderer::Render()
     Vec2 scale = m_Owner->GetScale();
     pos.x += m_Offset.x * scale.x;
     pos.y += m_Offset.y * scale.y;
-    IMAGE->RenderSprite(m_Texture, pos, m_Owner->GetRot(), m_Owner->GetScale(), m_Pivot, m_Color);
+    IMAGE->RenderSprite(m_Texture, pos, D3DXToRadian(m_Owner->GetRot()), m_Owner->GetScale(), m_Pivot, m_Color);
 
     if (m_ShaderEndFunc != nullptr)
         m_ShaderEndFunc();

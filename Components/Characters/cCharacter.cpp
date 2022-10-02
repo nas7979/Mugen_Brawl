@@ -7,12 +7,13 @@ void cCharacter::Init()
 {
     if (m_Data == nullptr)
         return;
-
-    Reset();
-
+    
     m_AnimPlayer = AddComponent<cCharacterAnimationPlayer>();
 
-    m_AnimPlayer->SetAnimation(m_Data->GetAnimation("Idle"));
+    m_AnimPlayer->SetCharacterEventHandler(this);
+    m_AnimPlayer->SetAnimationImmediately(m_Data->GetAnimation("Idle"));
+
+    Reset();
 }
 
 void cCharacter::Update()
@@ -20,6 +21,10 @@ void cCharacter::Update()
     if (m_HitStop > 0)
     {
         m_HitStop--;
+        for (auto& iter : *m_AttachedEffects.GetValue())
+        {
+            iter->SetHitStop(m_HitStop);
+        }
         return;
     }
 
@@ -46,15 +51,15 @@ void cCharacter::Update()
             if (m_Velocity.y >= fallSpeed / 60.f)
             {
                 if (!CheckCurAnimation("Fall"))
-                    SetAnimation("Fall");
+                    SetAnimationImmediately("Fall");
             }
             else
             {
                 if (!CheckCurAnimation("Jump"))
-                    SetAnimation("Jump");
+                    SetAnimationImmediately("Jump");
                 float jumpAnimLength = m_AnimPlayer->GetCurrentAnimation()->GetLength();
                 float velPerFrame = fallSpeed / 30.f / jumpAnimLength;
-                m_AnimPlayer->SetFrame(max(0, round(jumpAnimLength * 0.5f + Clamp(m_Velocity.y, -fallSpeed / 60.f, fallSpeed / 60.f) / velPerFrame) - 1));
+                m_AnimPlayer->SetFrameImmediately(max(0, round(jumpAnimLength * 0.5f + Clamp(m_Velocity.y, -fallSpeed / 60.f, fallSpeed / 60.f) / velPerFrame) - 1));
             }
         }
     }
@@ -80,19 +85,19 @@ void cCharacter::Update()
         {
             RemoveFlag(Flag::Dashing);
         }
+
+        if (isLeftPressed)
+        {
+            SetDirection(-1);
+        }
+
+        if (isRightPressed)
+        {
+            SetDirection(1);
+        }
         
         if (!HasFlag(Flag::InAir))
         {
-            if (isLeftPressed)
-            {
-                SetDirection(-1);
-            }
-
-            if (isRightPressed)
-            {
-                SetDirection(1);
-            }
-            
             if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
             {
                 if (HasFlag(Flag::Standing))
@@ -160,11 +165,11 @@ void cCharacter::Update()
         {
             if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd") && !CheckCurAnimation("TurnStand"))
             {
-                SetAnimation("Idle");
+                SetAnimationImmediately("Idle");
             }
             else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
             {
-                SetAnimation("Crouch");
+                SetAnimationImmediately("Crouch");
             }
         }
     }
@@ -179,13 +184,19 @@ void cCharacter::Update()
         {
             m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
             m_HitStun--;
-        }
 
-        if (!HasFlag(Flag::InAir))
-        {
-            if (abs(m_Velocity.x) <= 0.1f)
+            if (HasFlag(Flag::InAir))
             {
-                m_Velocity.x = 0;
+                Vec2 velocityDir = m_Velocity;
+                velocityDir.y -= 1;
+                m_Owner->SetRot(D3DXToDegree(atan2(velocityDir.y, velocityDir.x)) - (m_Owner->GetScale().x > 0 ? 180 : 0));
+            }
+            else
+            {
+                if (abs(m_Velocity.x) <= 0.1f)
+                {
+                    m_Velocity.x = 0;
+                }
             }
         }
     }
@@ -195,6 +206,11 @@ void cCharacter::Update()
     m_Velocity.y *= curSprite->GetFriction().y;
     
     m_Owner->SetPos(m_Owner->GetPos() + Vec3(m_Velocity.x, m_Velocity.y, 0));
+
+    for (auto& iter : *m_AttachedEffects.GetValue())
+    {
+        iter->GetOwner()->SetPos(m_Owner->GetPos());
+    }
 }
 
 void cCharacter::Render()
@@ -212,6 +228,7 @@ void cCharacter::Render()
 
 void cCharacter::Release()
 {
+    GAME->SetCharacter(nullptr, m_PlayerIndex);
 }
 
 void cCharacter::OnCollision(cObject* _other)
@@ -258,12 +275,15 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
     
     float damage = _enemyHitBox->CalculateDamage(_by, this);
     m_Damage += damage;
+
+    bool isInAir = HasFlag(Flag::InAir);
+    std::string eventKey;
+    float radDir = D3DXToRadian(isInAir ? _enemyHitBox->GetAirDirection() : _enemyHitBox->GetDirection());
     
-    float radDir = D3DXToRadian(_enemyHitBox->GetDirection());
     Vec2 dirVec = Vec2(cos(radDir) * xDir, sin(radDir));
-    float knockBack = _enemyHitBox->CalculateKnockback(_by, this, damage);
+    float knockBack = _enemyHitBox->CalculateKnockBack(_by, this, damage);
     
-    m_HitStun = 8 + ceil(knockBack * 0.015f * _enemyHitBox->GetHitStunMul());
+    m_HitStun = 8 + ceil(knockBack * 0.015f * (isInAir ? _enemyHitBox->GetAirHitStunMul() : _enemyHitBox->GetHitStunMul()));
     
     std::string fixedHitStop;
     _enemyHitBox->FindEventKey("HitStop", &fixedHitStop);
@@ -327,6 +347,11 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
     }
 }
 
+void cCharacter::OnSpriteChanged(cCharacterSprite* _sprite)
+{
+    AddVelocity(Vec2(_sprite->GetMomentum().x / 60.f * Sign(m_Owner->GetScale().x), _sprite->GetMomentum().y / 60.f));
+}
+
 void cCharacter::HandleAnimationEvent(const std::string& _key, const std::string& _value)
 {
 }
@@ -343,6 +368,19 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
     if (_key == "ResetHit")
     {
         m_AttackedCharacters.GetValue()->clear();
+        return;
+    }
+
+    if (_key == "fx")
+    {
+        cCharacterEffect* effect = OBJECT->AddObject<cCharacterEffect>("fx", m_Owner->GetPos(), Obj_Effect);
+        effect->GetOwner()->SetScale(m_Owner->GetScale());
+        cCharacterAnimation* anim = m_Data->GetAnimation(_value);
+        effect->SetAnimation(m_Data, anim);
+        effect->SetFrom(this);
+
+        if (anim->FindEventKey("Attach"))
+            m_AttachedEffects.GetValue()->push_back(effect);
         return;
     }
 }
@@ -434,9 +472,13 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
     {
         for (auto& command : m_Data->GetCommands())
         {
-            if (INPUT->CheckInputBuffer(command, this))
+            if (!m_Data->GetAnimation(command)->FindEventKey(HasFlag(Flag::InAir) ? "Air" : "Ground"))
+                continue;
+            
+            if (INPUT->CheckInputBuffer(command[0] == 'j' ? command.substr(1) : command, this))
             {
                 SetState(State::Action);
+                RemoveFlag(Flag::Dashing);
                 SetAnimation(command);
 
                 cSoundSet* soundSet = m_Data->GetSoundSet(command);
@@ -475,6 +517,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
     {
         SetState(State::Action);
         SetAnimation(normalInput);
+        RemoveFlag(Flag::Dashing);
         if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex))
             SetDirection(-1);
         else if (INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex))
@@ -500,7 +543,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
                     m_AirActionLimit--;
                     SetAnimation("AirDash");
                     SetState(State::Action);
-                    AddVelocity(Vec2(35 * Sign(m_Owner->GetScale().x), -m_Weight / 50.f), true);
+                    AddVelocity(Vec2(35 * Sign(m_Owner->GetScale().x), 0), true);
                     return false;
                 }
             }
@@ -531,7 +574,9 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
                 Jump();
             }
 
-            INPUT->ClearInputBuffer(m_PlayerIndex);
+            INPUT->RemoveInputBuffer(IngameInput::Up, m_PlayerIndex);
+            if (HasFlag(Flag::Dashing) && INPUT->CheckInputBuffer("66", this))
+                INPUT->RemoveInputBuffer(0, m_PlayerIndex);
             return true;
         }
     }
@@ -557,16 +602,67 @@ void cCharacter::SetState(State _state)
     State prevState = m_State;
     switch (_state)
     {
-    case State::Hit:
+    case State::Idle:
         {
+            RemoveFlag(Flag::Dashing);
+            m_Owner->SetRot(0);
+
             if (HasFlag(Flag::InAir))
             {
-                
+                short fallSpeed = m_Data->GetFallSpeed();
+                if (m_Velocity.y >= fallSpeed / 60.f)
+                {
+                    if (!CheckCurAnimation("Fall"))
+                        SetAnimationImmediately("Fall");
+                }
+                else
+                {
+                    if (!CheckCurAnimation("Jump"))
+                        SetAnimationImmediately("Jump");
+                    float jumpAnimLength = m_AnimPlayer->GetCurrentAnimation()->GetLength();
+                    float velPerFrame = fallSpeed / 30.f / jumpAnimLength;
+                    m_AnimPlayer->SetFrameImmediately(max(0, round(jumpAnimLength * 0.5f + Clamp(m_Velocity.y, -fallSpeed / 60.f, fallSpeed / 60.f) / velPerFrame) - 1));
+                }
+            }
+            else
+            {
+                if (HasFlag(Flag::Crouching))
+                {
+                    SetAnimationImmediately("Crouch");
+                }
+                else
+                {
+                    SetAnimationImmediately("Idle");
+                }
+            }
+            break;
+        }
+
+    case State::Action:
+        {
+            break;
+        }
+        
+    case State::Hit:
+        {
+            RemoveFlag(Flag::Dashing);
+            if (HasFlag(Flag::InAir))
+            {
+                SetAnimation("Hit_Air");
+                Vec2 velocityDir = m_Velocity;
+                velocityDir.y -= 1;
+                m_Owner->SetRot(D3DXToDegree(atan2(velocityDir.y, velocityDir.x)) - (m_Owner->GetScale().x > 0 ? 180 : 0));
             }
             else
             {
                 SetAnimation("Hit_Ground");
             }
+
+            for (auto& iter : *m_AttachedEffects.GetValue())
+            {
+                iter->GetOwner()->Destroy();
+            }
+            m_AttachedEffects.GetValue()->clear();
             break;
         }
     }
@@ -617,6 +713,18 @@ void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
     }
 
     m_Velocity += _vel;
+}
+
+void cCharacter::RemoveAttachedEffect(cCharacterEffect* _effect)
+{
+    for (auto& iter = m_AttachedEffects.GetValue()->begin(); iter != m_AttachedEffects.GetValue()->end();)
+    {
+        if ((*iter) == _effect)
+        {
+            m_AttachedEffects.GetValue()->erase(iter);
+            return;
+        }
+    }
 }
 
 void cCharacter::SetDirection(int _dir)

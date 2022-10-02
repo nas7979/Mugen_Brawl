@@ -90,6 +90,22 @@ void cCharacterData::Deserialize(char* _buffer, UINT& _pointer)
         if (find != m_Animations.end())
             m_Commands.push_back(command);
     }
+
+    for (char i = 'a'; i <= 'c'; i++)
+    {
+        std::string command = std::string("j626") + i;
+        auto find = m_Animations.find(command);
+        if (find != m_Animations.end())
+            m_Commands.push_back(command);
+    }
+    
+    for (char i = 'a'; i <= 'c'; i++)
+    {
+        std::string command = std::string("j26") + i;
+        auto find = m_Animations.find(command);
+        if (find != m_Animations.end())
+            m_Commands.push_back(command);
+    }
     
     m_Version = CURRENT_VERSION;
 }
@@ -150,9 +166,6 @@ void cCharacterData::SetPalette(cPalette* _palette)
 
 cPalette* cCharacterData::GetPalette(int _index)
 {
-    if (_index < FIXED_PALETTE_INDEX && m_Palettes.GetLength() > _index)
-        return m_Palettes[_index];
-    
     for (int i = m_Palettes.GetLength() - 1; i >= 0; i--)
     {
         if (m_Palettes[i]->GetIndex() == _index)
@@ -160,6 +173,14 @@ cPalette* cCharacterData::GetPalette(int _index)
     }
 
     return nullptr;
+}
+
+cPalette* cCharacterData::GetPaletteByArrayIndex(int _index)
+{
+    if (_index >= m_Palettes.GetLength())
+        return nullptr;
+    
+    return m_Palettes[_index];
 }
 
 void cCharacterData::RemovePalette(int _index)

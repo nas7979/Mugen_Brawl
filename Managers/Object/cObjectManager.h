@@ -20,6 +20,7 @@ public:
         cObject* obj = new cObject(_tag);
         obj->SetName(_name);
         obj->SetPos(_pos);
+        obj->SetCreatedAt(FRAME_TIMER);
         m_Objects[_tag].push_back(obj);
         return obj->AddComponent<T>();
     }

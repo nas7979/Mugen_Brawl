@@ -52,13 +52,17 @@ private:
     cInputField* m_SpriteBoxEventKeyField;
     
     cInputField* m_HitBoxDamageField;
-    cInputField* m_HitBoxDirectionField;
-    cInputField* m_HitBoxHitStunMulField;
+    cDropDown* m_HitBoxGuardDropDown;
     cInputField* m_HitBoxShieldStunMulField;
     cInputField* m_HitBoxShieldDamageMulField;
+    cInputField* m_HitBoxHitStunMulField;
+    cInputField* m_HitBoxDirectionField;
     cInputField* m_HitBoxBaseKnockBackField;
     cInputField* m_HitBoxGrowthKnockBackField;
-    cDropDown* m_HitBoxGuardDropDown;
+    cInputField* m_HitBoxAirDirectionField;
+    cInputField* m_HitBoxAirBaseKnockBackField;
+    cInputField* m_HitBoxAirGrowthKnockBackField;
+    cInputField* m_HitBoxAirHitStunMulField;
     
     cInputField* m_ThrowBoxCanThrowMidairField;
     

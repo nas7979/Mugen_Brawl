@@ -16,7 +16,7 @@
 #include "GGPO/include/ggponet.h"
 
 #define g_Device DXUTGetD3D9Device()
-#define CURRENT_VERSION 2
+#define CURRENT_VERSION 4
 #define MAX_PLAYER 8
 
 using Vec2 = D3DXVECTOR2;
@@ -37,13 +37,13 @@ using namespace Utility;
 
 #include "Components/cComponent.h"
 #include "Managers/cSingleton.h"
+#include "Managers/Game/cGameManager.h"
 #include "Managers/Scene/cSceneManager.h"
 #include "Managers/Image/cImageManager.h"
 #include "Managers/Object/cObjectManager.h"
 #include "Managers/Camera/cCameraManager.h"
 #include "Managers/Input/cInputManager.h"
 #include "Managers/Sound/cSoundManager.h"
-#include "Managers/Game/cGameManager.h"
 #include "Managers/GGPO/cGGPOManager.h"
 
 #include "Components/Renderer/cRenderer.h"

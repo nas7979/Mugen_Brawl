@@ -40,6 +40,10 @@ private:
     float m_ShieldDamageMul = 1;
     float m_ShieldStunMul = 1;
     Guard m_Guard = Guard::Mid;
+    short m_AirDirection = 0;
+    short m_AirBaseKnockBack = 0;
+    short m_AirGrowthKnockBack = 0;
+    float m_AirHitStunMul = 1;
 
 public:
     void SetDamage(unsigned short _damage) {m_Damage = _damage;}
@@ -58,7 +62,15 @@ public:
     short GetGrowthKnockBack() const {return m_GrowthKnockBack;}
     void SetGuard(Guard _guard) {m_Guard = _guard;}
     Guard GetGuard() const {return m_Guard;}
+    void SetAirDirection(short _direction) {m_AirDirection = _direction;}
+    short GetAirDirection() const {return m_AirDirection;}
+    void SetAirBaseKnockBack(short _knockBack) {m_AirBaseKnockBack = _knockBack;}
+    short GetAirBaseKnockBack() const {return m_AirBaseKnockBack;}
+    void SetAirGrowthKnockBack(short _knockBack) {m_AirGrowthKnockBack = _knockBack;}
+    short GetAirGrowthKnockBack() const {return m_AirGrowthKnockBack;}
+    void SetAirHitStunMul(float _multiplier) {m_AirHitStunMul = _multiplier;}
+    float GetAirHitStunMul() const {return m_AirHitStunMul;}
 
-    float CalculateKnockback(cCharacter* _from, cCharacter* _to, float _damageDealt) const;
+    float CalculateKnockBack(cCharacter* _from, cCharacter* _to, float _damageDealt) const;
     float CalculateDamage(cCharacter* _from, cCharacter* _to) const;
 };
