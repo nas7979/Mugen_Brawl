@@ -25,6 +25,26 @@ void cCharacter::Update()
         {
             iter->SetHitStop(m_HitStop);
         }
+
+        if (m_State == State::BlockStun && m_InstantShieldTimer > 0)
+        {
+            m_InstantShieldTimer--;
+            if (!INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex))
+            {
+                RemoveFlag(Flag::Shield_High);
+                RemoveFlag(Flag::Shield_Mid);
+                RemoveFlag(Flag::Shield_Low);
+                RemoveFlag(Flag::Shield_Air);
+                
+                m_Shield += m_LastShieldDamage;
+                m_InstantShieldTimer = 0;
+                m_HitStop = 25;
+                if (m_LastAttackedBy != nullptr)
+                    m_LastAttackedBy->SetHitStop(25);
+                m_HitStun = 0;
+                SetState(State::Idle);
+            }
+        }
         return;
     }
 
@@ -309,6 +329,8 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)
 {
+    m_LastAttackedBy = _by;
+    
     Flag shieldFlag;
     switch (_enemyHitBox->GetGuard())
     {
@@ -351,9 +373,11 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
 
     if (isShielded)
     {
-        m_Shield -= damage * shieldDamageMul;
+        m_LastShieldDamage = damage * shieldDamageMul;
+        m_Shield -= m_LastShieldDamage;
         m_HitStun = ceil(3 + damage * 0.5f * _enemyHitBox->GetShieldStunMul());
         SetState(State::BlockStun);
+        m_InstantShieldTimer = 4;
         
         if (m_Shield < 0)
         {
@@ -409,15 +433,42 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
 
     Vec2 bodyBoxOutline = Vec2( collDir.x == 0 ? 0 : (collDir.x < 0 ? _bodyRect.left : _bodyRect.right), collDir.y == 0 ? 0 : (collDir.y < 0 ? _bodyRect.top : _bodyRect.bottom));
     
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3((nearestPosToChar.x - bodyBoxOutline.x) * collDir.x, (nearestPosToChar.y - bodyBoxOutline.y) * collDir.y, 0));
-    if (_overlapped.bottom - _overlapped.top > 0)
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3((nearestPosToChar.x - bodyBoxOutline.x) * collDir.x, (nearestPosToChar.y - bodyBoxOutline.y - collDir.y) * collDir.y, 0));
+
+    if (m_State == State::Hit)
     {
-        RemoveFlag(Flag::InAir);
-        RemoveFlag(Flag::Dashing);
-        m_Velocity = Vec2(0, 0);
-        SetAnimation("Land");
-        SetState(State::Action);
-        m_AirActionLimit = m_Data->GetAirMovementLimit();
+        float velocity = D3DXVec2Length(&m_Velocity);
+        if (velocity < 30)
+        {
+            SetState(State::Down);
+            m_Velocity = Vec2(0, 0);
+            m_Owner->SetRot(0);
+            SetAnimationImmediately("Down");
+        }
+        else
+        {
+            Vec2 normalizedVel;
+            Vec2 projectedWallNormalVec = -collDir * sin(atan2(m_Velocity.y, m_Velocity.x));
+            D3DXVec2Normalize(&normalizedVel, &m_Velocity);
+            Vec2 reflectedVel = normalizedVel + projectedWallNormalVec * 2;
+            m_Velocity = reflectedVel * velocity * 0.75f;
+            m_HitStun += 10;
+        }
+    }
+    else
+    {
+        if (m_State == State::Idle || m_State == State::Action || m_State == State::BlockStun)
+        {
+            if (_overlapped.bottom - _overlapped.top > 0)
+            {
+                RemoveFlag(Flag::InAir);
+                RemoveFlag(Flag::Dashing);
+                m_Velocity = Vec2(0, 0);
+                SetAnimation("Land");
+                SetState(State::Action);
+                m_AirActionLimit = m_Data->GetAirMovementLimit();
+            }
+        }
     }
 }
 
@@ -508,7 +559,9 @@ void cCharacter::CollisionCheck()
         }
     }
 
-    if (m_HitStop <= 0)
+    if (m_HitStop == 0)
+        m_HitStop--;
+    else if (m_HitStop == -1)
     {
         cBodyBox** bodyBoxes;
         int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
@@ -779,6 +832,9 @@ void cCharacter::Reset()
     m_HitStop = 0;
     m_canCancel = false;
     m_Shield = m_Data->GetShieldSize();
+    m_InstantShieldTimer = 0;
+    m_LastAttackedBy = nullptr;
+    m_LastShieldDamage = 0;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)

@@ -83,13 +83,16 @@ private:
     BYTE m_PlayerIndex;
     BYTE m_Team;
     short m_HitStop;
-    short m_canCancel;
+    BYTE m_canCancel;
+    BYTE m_InstantShieldTimer;
     Vec2 m_Velocity;
     Vec2 m_Friction;
     float m_Damage;
     float m_Weight;
     float m_KnockbackDecPerFrame;
     float m_Shield;
+    cCharacter* m_LastAttackedBy = nullptr;
+    float m_LastShieldDamage;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
