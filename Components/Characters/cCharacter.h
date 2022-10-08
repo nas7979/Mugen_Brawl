@@ -17,6 +17,7 @@ public:
         Idle,
         Action,
         Hit,
+        BlockStun,
         Down,
         Wake,
         Thrown
@@ -88,6 +89,7 @@ private:
     float m_Damage;
     float m_Weight;
     float m_KnockbackDecPerFrame;
+    float m_Shield;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
@@ -104,6 +106,7 @@ private:
     bool CheckInputs(std::string* _cancelTable);
     void Jump();
     void SetState(State _state);
+    void OnShieldBreak();
     
 public:
     cCharacterSprite* GetCurrentSprite() const {return m_AnimPlayer->GetCurrentSprite();}
@@ -132,4 +135,3 @@ public:
     const std::vector<RECT>& GetHitBoxes() const {return m_HitBoxes;}
     const std::vector<RECT>& GetThrowBoxes() const {return m_ThrowBoxes;}
 };
-

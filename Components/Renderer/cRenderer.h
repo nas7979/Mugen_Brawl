@@ -23,6 +23,7 @@ private:
 public:
     void SetTexture(Texture* _texture) {m_Texture = _texture;}
     void SetOffset(Vec2 _offset) {m_Offset = _offset;}
+    Vec2 GetOffset() const {return m_Offset;}
     void SetPivot(Vec2 _pivot) {m_Pivot = _pivot;}
     void SetColor(D3DCOLOR _color) {m_Color = _color;}
     void SetShaderBeginFunc(const std::function<void()>& _func) {m_ShaderBeginFunc = _func;}

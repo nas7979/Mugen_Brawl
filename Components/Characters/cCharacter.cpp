@@ -126,6 +126,29 @@ void cCharacter::Update()
         {
             return;
         }
+
+        RemoveFlag(Flag::Shield_High);
+        RemoveFlag(Flag::Shield_Mid);
+        RemoveFlag(Flag::Shield_Low);
+        RemoveFlag(Flag::Shield_Air);
+        if (INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex) && m_Shield > 0)
+        {
+            if (HasFlag(Flag::InAir))
+                AddFlag(Flag::Shield_Air);
+            else if (INPUT->CheckGameInput(IngameInput::Up, m_PlayerIndex))
+                AddFlag(Flag::Shield_High);
+            else if (HasFlag(Flag::Crouching))
+                AddFlag(Flag::Shield_Low);
+            else
+                AddFlag(Flag::Shield_Mid);
+
+            isLeftPressed = isRightPressed = false;
+            m_Shield -= m_Data->GetShieldDecSpeed() / 60.f;
+        }
+        else
+        {
+            m_Shield = min(m_Shield + m_Data->GetShieldDecSpeed() / 120.f, m_Data->GetShieldSize());
+        }
         
         if (HasFlag(Flag::Standing))
         {
@@ -173,7 +196,7 @@ void cCharacter::Update()
             }
         }
     }
-    else if (m_State == State::Hit)
+    else if (m_State == State::Hit || m_State == State::BlockStun)
     {
         if (m_HitStun <= 0)
         {
@@ -182,21 +205,25 @@ void cCharacter::Update()
         }
         else
         {
-            m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
             m_HitStun--;
 
-            if (HasFlag(Flag::InAir))
+            if (m_State == State::Hit)
             {
-                Vec2 velocityDir = m_Velocity;
-                velocityDir.y -= 1;
-                m_Owner->SetRot(D3DXToDegree(atan2(velocityDir.y, velocityDir.x)) - (m_Owner->GetScale().x > 0 ? 180 : 0));
-            }
-            else
-            {
-                if (abs(m_Velocity.x) <= 0.1f)
+                m_Velocity.x -= Sign(m_Velocity.x) * m_KnockbackDecPerFrame;
+
+                if (HasFlag(Flag::InAir))
                 {
-                    m_Velocity.x = 0;
+                    Vec2 velocityDir = m_Velocity;
+                    velocityDir.y -= 1;
+                    m_Owner->SetRot(D3DXToDegree(atan2(velocityDir.y, velocityDir.x)) - (m_Owner->GetScale().x > 0 ? 180 : 0));
                 }
+                else
+                {
+                    if (abs(m_Velocity.x) <= 0.1f)
+                    {
+                        m_Velocity.x = 0;
+                    }
+                }   
             }
         }
     }
@@ -217,12 +244,24 @@ void cCharacter::Render()
 {
     if (m_HitStop > 0)
     {
+        Vec2 originOffset = GetCurrentSprite()->GetOffset();
         if (m_State == State::Hit)
         {
-            Vec2 originOffset = GetCurrentSprite()->GetOffset();
             originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
-            GetComponent<cRenderer>()->SetOffset(originOffset);
         }
+        else if (m_State == State::BlockStun)
+        {
+            originOffset += Vec2(Random(-0.5f, 0.5f), Random(-0.5f, 0.5f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
+        }
+        GetComponent<cRenderer>()->SetOffset(originOffset);
+    }
+
+    if (HasFlag(Flag::Shield_Air) || HasFlag(Flag::Shield_High) || HasFlag(Flag::Shield_Mid) || HasFlag(Flag::Shield_Low))
+    {
+        Vec2 offset = m_AnimPlayer->GetCurrentAnimation()->GetSprite(0)->GetOffset();
+        offset.x *= m_Owner->GetScale().x;
+        offset.y *= m_Owner->GetScale().y;
+        IMAGE->RenderSprite(IMAGE->GetTexture("Shield"), m_Owner->GetPos() + Vec3(offset.x, offset.y, -0.1), 0, Vec2(1, 1) * m_Shield / 160 * m_Data->GetSpriteScale());
     }
 }
 
@@ -270,14 +309,34 @@ void cCharacter::OnAnimationEnd(cCharacterAnimation* _anim)
 
 void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHitBox, RECT _overlappedRect)
 {
+    Flag shieldFlag;
+    switch (_enemyHitBox->GetGuard())
+    {
+    case Guard::High: shieldFlag = Flag::Shield_High; break;
+    case Guard::Mid: shieldFlag = Flag::Shield_Mid; break;
+    case Guard::Low: shieldFlag = Flag::Shield_Low; break;
+    case Guard::Unblockable: shieldFlag = (Flag)0; break;
+    case Guard::All: shieldFlag = (Flag)0xffffffff; break;
+    }
+
+    float shieldDamageMul = _enemyHitBox->GetShieldDamageMul() * 2;
+    bool isShielded = false;
+    if (HasFlag(shieldFlag))
+    {
+        isShielded = true;
+    }
+    else if (HasFlag((Flag)((int)Flag::Shield_High | (int)Flag::Shield_Mid | (int)Flag::Shield_Low | (int)Flag::Shield_Air)))
+    {
+        isShielded = true;
+        shieldDamageMul *= 2;
+    }
+    
     int xDir = Sign(_by->m_Owner->GetScale().x);
     SetDirection(-xDir);
     
     float damage = _enemyHitBox->CalculateDamage(_by, this);
-    m_Damage += damage;
 
     bool isInAir = HasFlag(Flag::InAir);
-    std::string eventKey;
     float radDir = D3DXToRadian(isInAir ? _enemyHitBox->GetAirDirection() : _enemyHitBox->GetDirection());
     
     Vec2 dirVec = Vec2(cos(radDir) * xDir, sin(radDir));
@@ -289,7 +348,22 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
     _enemyHitBox->FindEventKey("HitStop", &fixedHitStop);
     m_HitStop = fixedHitStop.empty() ? min(8 + ceil(sqrt(pow(_enemyHitBox->GetDamage(), 1.75f)) * 0.5f), 16) : atoi(fixedHitStop.c_str());
     _by->SetHitStop(m_HitStop);
-    
+
+    if (isShielded)
+    {
+        m_Shield -= damage * shieldDamageMul;
+        m_HitStun = ceil(3 + damage * 0.5f * _enemyHitBox->GetShieldStunMul());
+        SetState(State::BlockStun);
+        
+        if (m_Shield < 0)
+        {
+            OnShieldBreak();
+        }
+        return;
+    }
+
+    m_Damage += damage;
+
     m_KnockbackDecPerFrame = (knockBack * abs(dirVec.x) / (m_HitStun * (m_HitStun * 0.5f))) * (dirVec.y != 0 || HasFlag(Flag::InAir) ? 0.5f : 1);
     
     AddVelocity(Vec2(dirVec.x * knockBack / (m_HitStun * 0.5f), dirVec.y * sqrt(knockBack) * 2), true);
@@ -672,6 +746,14 @@ void cCharacter::SetState(State _state)
     m_State = _state;
 }
 
+void cCharacter::OnShieldBreak()
+{
+    m_Shield = m_Data->GetShieldSize();
+    SetState(State::Hit);
+    AddVelocity(Vec2(0, -35), true);
+    m_HitStun = 100;
+}
+
 void cCharacter::SetData(cCharacterData* _data)
 {
     m_Data = _data;
@@ -696,6 +778,7 @@ void cCharacter::Reset()
     m_KnockbackDecPerFrame = 0;
     m_HitStop = 0;
     m_canCancel = false;
+    m_Shield = m_Data->GetShieldSize();
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
