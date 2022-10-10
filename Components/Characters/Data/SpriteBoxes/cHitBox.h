@@ -9,16 +9,18 @@ enum class Guard : short
     High,
     All,
     Unblockable,
+    Throw,
     End
 };
 
-static const char* GuardToStringMap[5] = 
+static const char* GuardToStringMap[6] = 
 {
     "Low",
     "Mid",
     "High",
     "All",
-    "Unblockable"
+    "Unblockable",
+    "Throw"
 };
 
 class cHitBox : public cSpriteBox

@@ -216,7 +216,8 @@ void cEditorSpritePanel::Init()
     ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[1], [&]()->void{SetHitBoxGuard(Guard::Mid);}, false))
     ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[2], [&]()->void{SetHitBoxGuard(Guard::High);}, false))
     ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[3], [&]()->void{SetHitBoxGuard(Guard::All);}, false))
-    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[4], [&]()->void{SetHitBoxGuard(Guard::Unblockable);}, false));
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[4], [&]()->void{SetHitBoxGuard(Guard::Unblockable);}, false))
+    ->AddButton(CreateButton(Vec2(0, 0), Vec2(0, 0), GuardToStringMap[5], [&]()->void{SetHitBoxGuard(Guard::Throw);}, false));
     m_HitBoxFields.push_back(m_HitBoxGuardDropDown->GetOwner());
 
     m_HitBoxShieldStunMulField = CreateInputField(Vec2(1920 - 190, 780), Vec2(100, 40), "ShieldStun Mul", 24, false);
@@ -879,7 +880,8 @@ void cEditorSpritePanel::OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::
         m_HitBoxDamageField->SetText(box->GetCanThrowMidair() ? "1" : "0", false);
     }
 
-    m_SpriteBoxEventKeyField->SetText(_boxes[0].box->GetEventKey(), false);
+    if (_type != cSpriteBoxArea::AttachPoint)
+        m_SpriteBoxEventKeyField->SetText(_boxes[0].box->GetEventKey(), false);
 }
 
 void cEditorSpritePanel::UnlinkRemovedOnionSkinSprites(cCharacterSprite* _spriteToRemove)

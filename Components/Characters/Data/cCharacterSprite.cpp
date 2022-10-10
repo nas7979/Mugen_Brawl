@@ -16,8 +16,6 @@ cCharacterSprite::~cCharacterSprite()
         delete m_ThrowBoxes[i];
     for (int i = 0 ; i < m_BodyBoxes.GetLength(); i++)
         delete m_BodyBoxes[i];
-    for (int i = 0 ; i < m_AttachPoints.GetLength(); i++)
-        delete m_AttachPoints[i];
 }
 
 void cCharacterSprite::Serialize(char* _buffer, UINT& _pointer) const
@@ -171,4 +169,16 @@ void cCharacterSprite::FlipHorizontal()
 
     m_ImageBinary = std::string((LPCSTR)buffer->GetBufferPointer(), buffer->GetBufferSize());
     buffer->Release();
+}
+
+AttachPoint* cCharacterSprite::GetAttachPoint(AttachPointType _type) const
+{
+    for (int i = 0; i < m_AttachPoints.GetLength(); i++)
+    {
+        AttachPoint* point = m_AttachPoints[i];
+        if (point->type == _type)
+            return point;
+    }
+
+    return nullptr;
 }

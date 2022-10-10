@@ -42,5 +42,6 @@ public:
     void SetFrameImmediately(int _frame);
     int GetCurrentFrame() const {return m_CurFrame;}
     cCharacterSprite* GetCurrentSprite() const {return m_CurAnim->GetSprite(m_CurFrame);}
+    void UpdateRendererOnly();
     
 };

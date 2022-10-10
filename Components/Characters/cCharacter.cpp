@@ -6,9 +6,10 @@
 void cCharacter::Init()
 {
     if (m_Data == nullptr)
+    {
+        m_AnimPlayer = AddComponent<cCharacterAnimationPlayer>();
         return;
-    
-    m_AnimPlayer = AddComponent<cCharacterAnimationPlayer>();
+    }
 
     m_AnimPlayer->SetCharacterEventHandler(this);
     m_AnimPlayer->SetAnimationImmediately(m_Data->GetAnimation("Idle"));
@@ -31,10 +32,7 @@ void cCharacter::Update()
             m_InstantShieldTimer--;
             if (!INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex))
             {
-                RemoveFlag(Flag::Shield_High);
-                RemoveFlag(Flag::Shield_Mid);
-                RemoveFlag(Flag::Shield_Low);
-                RemoveFlag(Flag::Shield_Air);
+                RemoveShield();
                 
                 m_Shield += m_LastShieldDamage;
                 m_InstantShieldTimer = 0;
@@ -45,6 +43,18 @@ void cCharacter::Update()
                 SetState(State::Idle);
             }
         }
+        
+        Vec2 originOffset = GetCurrentSprite()->GetOffset();
+        if (m_State == State::Hit)
+        {
+            originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
+        }
+        else if (m_State == State::BlockStun)
+        {
+            originOffset += Vec2(Random(-0.5f, 0.5f), Random(-0.5f, 0.5f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
+        }
+        GetComponent<cRenderer>()->SetOffset(originOffset);
+        
         return;
     }
 
@@ -64,7 +74,15 @@ void cCharacter::Update()
     
     if (HasFlag(Flag::InAir))
     {
-        m_Velocity.y = min(m_Velocity.y + m_Weight / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
+        if (m_State == State::Idle || m_State == State::BlockStun)
+        {
+            m_Velocity.y = min(m_Velocity.y + m_Weight / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
+        }
+        else
+        {
+            m_Velocity.y = m_Velocity.y + m_Weight / 60.f;
+        }
+        
         if (m_State == State::Idle)
         {
             short fallSpeed = m_Data->GetFallSpeed();
@@ -101,9 +119,16 @@ void cCharacter::Update()
             else
                 isLeftPressed = false;
         }
-        else if (!isRightPressed && !isLeftPressed)
+        else if ((!isRightPressed && !isLeftPressed) || HasFlag(Flag::Crouching))
         {
             RemoveFlag(Flag::Dashing);
+            if (!HasFlag(Flag::InAir))
+            {
+                if (abs(m_Velocity.x) > m_Data->GetWalkSpeed() / 60.f)
+                    m_Velocity.x *= 0.9f;
+                else
+                    m_Velocity.x = 0;   
+            }
         }
 
         if (isLeftPressed)
@@ -147,10 +172,7 @@ void cCharacter::Update()
             return;
         }
 
-        RemoveFlag(Flag::Shield_High);
-        RemoveFlag(Flag::Shield_Mid);
-        RemoveFlag(Flag::Shield_Low);
-        RemoveFlag(Flag::Shield_Air);
+        RemoveShield();
         if (INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex) && m_Shield > 0)
         {
             if (HasFlag(Flag::InAir))
@@ -178,9 +200,7 @@ void cCharacter::Update()
                 if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
                     SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
             
-                Vec3 pos = m_Owner->GetPos();
-                pos.x -= (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-                m_Owner->SetPos(pos);
+                m_Velocity.x = -(HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
             }
 
             if (isRightPressed)
@@ -189,9 +209,7 @@ void cCharacter::Update()
                 if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
                     SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
                 
-                Vec3 pos = m_Owner->GetPos();
-                pos.x += (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-                m_Owner->SetPos(pos);
+                m_Velocity.x = (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
             }
 
             if (prevDir != Sign(m_Owner->GetScale().x))
@@ -214,6 +232,14 @@ void cCharacter::Update()
             {
                 SetAnimationImmediately("Crouch");
             }
+        }
+    }
+    else if (m_State == State::Down)
+    {
+        if (INPUT->CheckGameInput(IngameInput::Up, m_PlayerIndex))
+        {
+            SetState(State::Action);
+            SetAnimation("Wake");
         }
     }
     else if (m_State == State::Hit || m_State == State::BlockStun)
@@ -247,13 +273,13 @@ void cCharacter::Update()
             }
         }
     }
+
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3(m_Velocity.x, m_Velocity.y, 0));
     
     cCharacterSprite* curSprite = m_AnimPlayer->GetCurrentSprite();
     m_Velocity.x *= curSprite->GetFriction().x;
     m_Velocity.y *= curSprite->GetFriction().y;
     
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3(m_Velocity.x, m_Velocity.y, 0));
-
     for (auto& iter : *m_AttachedEffects.GetValue())
     {
         iter->GetOwner()->SetPos(m_Owner->GetPos());
@@ -262,20 +288,6 @@ void cCharacter::Update()
 
 void cCharacter::Render()
 {
-    if (m_HitStop > 0)
-    {
-        Vec2 originOffset = GetCurrentSprite()->GetOffset();
-        if (m_State == State::Hit)
-        {
-            originOffset += Vec2(Random(-1.f, 1.f), Random(-1.f, 1.f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
-        }
-        else if (m_State == State::BlockStun)
-        {
-            originOffset += Vec2(Random(-0.5f, 0.5f), Random(-0.5f, 0.5f)) * (pow(min(m_HitStop, 15) * 0.8f, 1.75) - 25);
-        }
-        GetComponent<cRenderer>()->SetOffset(originOffset);
-    }
-
     if (HasFlag(Flag::Shield_Air) || HasFlag(Flag::Shield_High) || HasFlag(Flag::Shield_Mid) || HasFlag(Flag::Shield_Low))
     {
         Vec2 offset = m_AnimPlayer->GetCurrentAnimation()->GetSprite(0)->GetOffset();
@@ -331,13 +343,12 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
 {
     m_LastAttackedBy = _by;
     
-    Flag shieldFlag;
+    Flag shieldFlag = (Flag)0;
     switch (_enemyHitBox->GetGuard())
     {
     case Guard::High: shieldFlag = Flag::Shield_High; break;
     case Guard::Mid: shieldFlag = Flag::Shield_Mid; break;
     case Guard::Low: shieldFlag = Flag::Shield_Low; break;
-    case Guard::Unblockable: shieldFlag = (Flag)0; break;
     case Guard::All: shieldFlag = (Flag)0xffffffff; break;
     }
 
@@ -354,7 +365,6 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
     }
     
     int xDir = Sign(_by->m_Owner->GetScale().x);
-    SetDirection(-xDir);
     
     float damage = _enemyHitBox->CalculateDamage(_by, this);
 
@@ -385,6 +395,11 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
         }
         return;
     }
+    else
+    {
+        SetDirection(-xDir);
+        RemoveShield();
+    }
 
     m_Damage += damage;
 
@@ -399,14 +414,20 @@ void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHit
 {
     m_canCancel = true;
     m_AttackedCharacters.GetValue()->push_back(_to->GetOwner()->GetUID());
+    
+    m_ThrowingCharacter = nullptr;
 }
 
 void cCharacter::OnThrown(cCharacter* _by, cBodyBox* _myBodyBox, cThrowBox* _enemyThrowBox, RECT _overlappedRect)
 {
+    SetState(State::Thrown);
+    RemoveShield();
+    m_Velocity = Vec2(0, 0);
 }
 
 void cCharacter::OnThrow(cCharacter* _to, cThrowBox* _myThrowBox, cBodyBox* _enemyBodyBox, RECT _overlappedRect)
 {
+    m_ThrowingCharacter = _to;
 }
 
 void cCharacter::OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRect, const RECT& _overlapped)
@@ -422,28 +443,57 @@ void cCharacter::OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRe
 
 void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
-    Vec2 prevPos = Vec2(m_Owner->GetPos().x - m_Velocity.x, m_Owner->GetPos().y - m_Velocity.y);
-    Vec2 nearestPosToChar = Vec2(Clamp((int)prevPos.x, _with->GetRect().left, _with->GetRect().right), Clamp((int)prevPos.y, _with->GetRect().top, _with->GetRect().bottom));
-    Vec2 nearestPosToBlock = Vec2(Clamp(nearestPosToChar.x, _bodyRect.left - m_Velocity.x, _bodyRect.right - m_Velocity.x),
-        Clamp(nearestPosToChar.y, _bodyRect.top - m_Velocity.y, _bodyRect.bottom - m_Velocity.y));
+    const RECT& wallRect = _with->GetRect();
+
     Vec2 collDir;
-    D3DXVec2Normalize(&collDir, &(nearestPosToChar - nearestPosToBlock));
-    if (collDir.x == 0 && collDir.y == 0)
-        collDir.y = 1;
+    if ((m_PrevBodyRect.left < wallRect.right && m_PrevBodyRect.left > wallRect.left) || (m_PrevBodyRect.right < wallRect.right && m_PrevBodyRect.right > wallRect.left))
+    {
+        collDir = Vec2(0, Sign(_with->GetOwner()->GetPos().y - m_PrevPos.y));
+        if (collDir.y > 0)
+            m_Owner->SetPos(m_Owner->GetPos() + Vec3(0, wallRect.top -_bodyRect.bottom, 0));
+        else
+            m_Owner->SetPos(m_Owner->GetPos() + Vec3(0, wallRect.bottom -_bodyRect.top, 0));
+    }
+    else
+    {
+        collDir = Vec2(Sign(_with->GetOwner()->GetPos().x - m_PrevPos.x), 0);
+        if (collDir.x >= 0)
+            m_Owner->SetPos(m_Owner->GetPos() + Vec3(wallRect.left -_bodyRect.right, 0, 0));
+        else
+            m_Owner->SetPos(m_Owner->GetPos() + Vec3(wallRect.right -_bodyRect.left, 0, 0));
 
-    Vec2 bodyBoxOutline = Vec2( collDir.x == 0 ? 0 : (collDir.x < 0 ? _bodyRect.left : _bodyRect.right), collDir.y == 0 ? 0 : (collDir.y < 0 ? _bodyRect.top : _bodyRect.bottom));
+        UpdateRects();
+        
+        for (auto& iter : OBJECT->GetObjects(Obj_Character))
+        {
+            cCharacter* other = iter->GetComponent<cCharacter>();
+            if (m_Team == other->GetTeam())
+                continue;
+
+            RECT overlapped;
+            if (IntersectRect(&overlapped, &m_BodyBoxes[0], &other->GetBodyBoxes()[0]))
+            {
+                float collDirX = Sign(m_Owner->GetPos().x - other->GetOwner()->GetPos().x);
     
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3((nearestPosToChar.x - bodyBoxOutline.x) * collDir.x, (nearestPosToChar.y - bodyBoxOutline.y - collDir.y) * collDir.y, 0));
+                other->GetOwner()->SetPos(other->GetOwner()->GetPos() + Vec3((overlapped.right - overlapped.left + 2) * -collDirX, 0, 0));
 
-    if (m_State == State::Hit)
+                other->UpdateRects();
+            }
+        }
+    }
+
+    if (m_State == State::Hit && HasFlag(Flag::InAir))
     {
         float velocity = D3DXVec2Length(&m_Velocity);
-        if (velocity < 30)
+        if (velocity < 30 && collDir.y > 0)
         {
+            RemoveFlag(Flag::InAir);
+            RemoveFlag(Flag::Dashing);
             SetState(State::Down);
             m_Velocity = Vec2(0, 0);
             m_Owner->SetRot(0);
             SetAnimationImmediately("Down");
+            m_AirActionLimit = m_Data->GetAirMovementLimit();
         }
         else
         {
@@ -459,17 +509,19 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
     {
         if (m_State == State::Idle || m_State == State::Action || m_State == State::BlockStun)
         {
-            if (_overlapped.bottom - _overlapped.top > 0)
+            if (collDir.y > 0)
             {
                 RemoveFlag(Flag::InAir);
                 RemoveFlag(Flag::Dashing);
-                m_Velocity = Vec2(0, 0);
-                SetAnimation("Land");
+                SetAnimationImmediately("Land");
                 SetState(State::Action);
+                m_Velocity = Vec2(0, 0);
                 m_AirActionLimit = m_Data->GetAirMovementLimit();
             }
         }
     }
+
+    UpdateRects();
 }
 
 void cCharacter::OnSpriteChanged(cCharacterSprite* _sprite)
@@ -508,6 +560,12 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
             m_AttachedEffects.GetValue()->push_back(effect);
         return;
     }
+
+    if (_key == "Miss" && m_ThrowingCharacter == nullptr)
+    {
+        SetAnimationImmediately(m_AnimPlayer->GetCurrentAnimation()->GetKey() + "_Miss");
+        return;
+    }
 }
 
 void cCharacter::HandleHurtBoxEvent(const std::string& _key, const std::string& _value)
@@ -528,6 +586,9 @@ void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& 
 
 void cCharacter::CollisionCheck()
 {
+    if (m_State == State::Thrown)
+        return;
+    
     RECT overlapped;
     cCharacterSprite* curSprite = GetCurrentSprite();
 
@@ -544,24 +605,51 @@ void cCharacter::CollisionCheck()
         {
             for (int i = 0; i < m_HitBoxes.size(); i++)
             {
+                if ((m_ThrowingCharacter == nullptr && curSprite->GetHitBox(i)->GetGuard() == Guard::Throw) || (m_ThrowingCharacter != nullptr && m_ThrowingCharacter != other))
+                    goto outHit;
+                
                 for (int j = 0; j < other->GetHurtBoxes().size(); j++)
                 {
                     if (IntersectRect(&overlapped, &m_HitBoxes[i], &other->GetHurtBoxes()[j]))
                     {
                         OnHit(other, other->GetCurrentSprite()->GetHurtBox(j), curSprite->GetHitBox(i), overlapped);
                         other->OnHurt(this, other->GetCurrentSprite()->GetHurtBox(j), curSprite->GetHitBox(i), overlapped);
-                        goto out;
+                        goto outHit;
                     }
                 }
+                continue;
+                outHit:
+                break;
             }
-            out:
-            continue;
+        }
+
+        if (m_ThrowingCharacter == nullptr)
+        {
+            if (other->m_State == State::Hit || other->m_State == State::BlockStun || other->m_State == State::Down)
+                continue;
+            
+            for (int i = 0; i < m_ThrowBoxes.size(); i++)
+            {
+                if (!curSprite->GetThrowBox(i)->GetCanThrowMidair() && other->HasFlag(Flag::InAir))
+                    continue;
+                
+                for (int j = 0; j < other->GetBodyBoxes().size(); j++)
+                {
+                    if (IntersectRect(&overlapped, &m_ThrowBoxes[i], &other->GetBodyBoxes()[j]))
+                    {
+                        OnThrow(other, other->GetCurrentSprite()->GetThrowBox(j), curSprite->GetBodyBox(i), overlapped);
+                        other->OnThrown(this, other->GetCurrentSprite()->GetBodyBox(j), curSprite->GetThrowBox(i), overlapped);
+                        goto outThrow;
+                    }
+                }
+                continue;
+                outThrow:
+                break;
+            }
         }
     }
-
+    
     if (m_HitStop == 0)
-        m_HitStop--;
-    else if (m_HitStop == -1)
     {
         cBodyBox** bodyBoxes;
         int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
@@ -572,8 +660,59 @@ void cCharacter::CollisionCheck()
         {
             cBlock* block = iter->GetComponent<cBlock>();
             if (IntersectRect(&overlapped, &bodyRectForGround, &block->GetRect()))
+            {
                 OnCollisionWithMap(block, bodyRectForGround, overlapped);
-        }   
+
+                Vec3 pos = m_Owner->GetPos();
+                Vec2 scale = m_Owner->GetScale();
+                cBodyBox* box = bodyBoxes[0];
+                bodyRectForGround = scale.x > 0
+                ? RECT {
+                    (LONG)(pos.x + box->GetLeft() * scale.x),
+                    (LONG)(pos.y + box->GetTop() * scale.y),
+                    (LONG)(pos.x + box->GetRight() * scale.x),
+                    (LONG)(pos.y + box->GetBottom() * scale.y)
+                }
+                : RECT {
+                    (LONG)(pos.x + box->GetRight() * scale.x),
+                    (LONG)(pos.y + box->GetTop() * scale.y),
+                    (LONG)(pos.x + box->GetLeft() * scale.x),
+                    (LONG)(pos.y + box->GetBottom() * scale.y)
+                };
+            }
+        }
+
+        m_PrevPos = (Vec2)m_Owner->GetPos();
+        m_PrevBodyRect = bodyRectForGround;
+    }
+
+    if (m_ThrowingCharacter != nullptr)
+    {
+        std::string eventKey;
+        curSprite->FindEventKey("EnemySprite", &eventKey);
+        m_ThrowingCharacter->SetAnimationImmediately(eventKey);
+        
+        cObject* object = m_ThrowingCharacter->GetOwner();
+        AttachPoint* attachTo = curSprite->GetAttachPoint(AttachPointType::AttachTo);
+        AttachPoint* attachPoint;
+        curSprite->FindEventKey("AttachTo", &eventKey);
+        cCharacterSprite* enemySprite = m_ThrowingCharacter->GetCurrentSprite();
+        for (int i = 0; i < (int)AttachPointType::End; i++)
+        {
+            if (AttachPointTypeToStringMap[i] == eventKey)
+            {
+                attachPoint = enemySprite->GetAttachPoint((AttachPointType)i);
+                break;
+            }
+        }
+        
+        Vec3 myPos = m_Owner->GetPos();
+        object->SetPos(Vec3(myPos.x + attachTo->x * Sign(m_Owner->GetScale().x) - attachPoint->x * Sign(object->GetScale().x), myPos.y + attachTo->y - attachPoint->y, object->GetPos().z));
+
+        curSprite->FindEventKey("EnemyRot", &eventKey);
+        object->SetRot(atoi(eventKey.c_str()) * (m_Owner->GetScale().x > 0 ? 1 : -1));
+
+        m_ThrowingCharacter->SetDirection(Sign(m_Owner->GetScale().x) * (curSprite->FindEventKey("EnemyFlipX") ? 1 : -1));
     }
 }
 
@@ -606,7 +745,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
             {
                 SetState(State::Action);
                 RemoveFlag(Flag::Dashing);
-                SetAnimation(command);
+                SetAnimationImmediately(command);
 
                 cSoundSet* soundSet = m_Data->GetSoundSet(command);
                 if (soundSet != nullptr)
@@ -643,7 +782,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
     if (normalInput[1] != 0 && (_cancelTable == nullptr || _cancelTable->find(normalInput) != std::string::npos))
     {
         SetState(State::Action);
-        SetAnimation(normalInput);
+        SetAnimationImmediately(normalInput);
         RemoveFlag(Flag::Dashing);
         if (INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex))
             SetDirection(-1);
@@ -668,7 +807,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
                 if (m_AirActionLimit > 0)
                 {
                     m_AirActionLimit--;
-                    SetAnimation("AirDash");
+                    SetAnimationImmediately("AirDash");
                     SetState(State::Action);
                     AddVelocity(Vec2(35 * Sign(m_Owner->GetScale().x), 0), true);
                     return false;
@@ -676,9 +815,17 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
             }
             else
             {
+                if (_cancelTable == nullptr)
+                {
+                    if (m_State != State::Idle)
+                        SetState(State::Idle);
+                }
+                else
+                {
+                    SetState(State::Action);
+                    SetAnimationImmediately("DashCancel");
+                }
                 AddFlag(Flag::Dashing);
-                if (m_State != State::Idle)
-                    SetState(State::Idle);
 
                 return false;
             }
@@ -693,7 +840,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
             m_JumpDir = INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex) ? -1 : INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex) ? 1 : 0;
             if (!HasFlag(Flag::InAir))
             {
-                SetAnimation("PreJump");
+                SetAnimationImmediately("PreJump");
                 SetState(State::Action);
             }
             else
@@ -713,7 +860,7 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
 
 void cCharacter::Jump()
 {
-    m_Velocity.x = (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) * m_JumpDir / 60.f;
+    m_Velocity.x = (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed() * 1.5f) * m_JumpDir / 60.f;
     m_Velocity.y = -m_Data->GetJumpHeight();
     SetAnimation("Jump");
     RemoveFlag(Flag::Standing);
@@ -776,6 +923,7 @@ void cCharacter::SetState(State _state)
             if (HasFlag(Flag::InAir))
             {
                 SetAnimation("Hit_Air");
+                m_AnimPlayer->UpdateRendererOnly();
                 Vec2 velocityDir = m_Velocity;
                 velocityDir.y -= 1;
                 m_Owner->SetRot(D3DXToDegree(atan2(velocityDir.y, velocityDir.x)) - (m_Owner->GetScale().x > 0 ? 180 : 0));
@@ -783,6 +931,7 @@ void cCharacter::SetState(State _state)
             else
             {
                 SetAnimation("Hit_Ground");
+                m_AnimPlayer->UpdateRendererOnly();
             }
 
             for (auto& iter : *m_AttachedEffects.GetValue())
@@ -823,7 +972,6 @@ void cCharacter::Reset()
     m_Flag = 0;
     SetState(State::Idle);
     m_Damage = 0;
-    m_Friction = Vec2(1, 1);
     m_Velocity = Vec2(0, 0);
     m_AirActionLimit = m_Data->GetAirMovementLimit();
     m_Weight = m_Data->GetWeight();
@@ -835,6 +983,7 @@ void cCharacter::Reset()
     m_InstantShieldTimer = 0;
     m_LastAttackedBy = nullptr;
     m_LastShieldDamage = 0;
+    m_ThrowingCharacter = nullptr;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
@@ -866,6 +1015,11 @@ void cCharacter::RemoveAttachedEffect(cCharacterEffect* _effect)
     }
 }
 
+void cCharacter::RemoveShield()
+{
+    RemoveFlag((Flag)((int)Flag::Shield_Air | (int)Flag::Shield_High | (int)Flag::Shield_Mid | (int)Flag::Shield_Low));
+}
+
 void cCharacter::SetDirection(int _dir)
 {
     int prevDir = Sign(m_Owner->GetScale().x);
@@ -873,9 +1027,9 @@ void cCharacter::SetDirection(int _dir)
     if (m_State == State::Idle && prevDir != _dir)
     {
         if (HasFlag(Flag::Standing) && (CheckCurAnimation("Idle") || CheckCurAnimation("Walk") || CheckCurAnimation("Dash")))
-            SetAnimation("TurnStand");
+            SetAnimationImmediately("TurnStand");
         else if (HasFlag(Flag::Crouching) && CheckCurAnimation("Crouch"))
-            SetAnimation("TurnCrouch");
+            SetAnimationImmediately("TurnCrouch");
     }
 }
 

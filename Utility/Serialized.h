@@ -159,7 +159,7 @@ public:
         return *this;
     }
 
-    T& operator[](int _idx)
+    T& operator[](int _idx) const
     {
         return m_Value[_idx];
     }

@@ -90,7 +90,8 @@ void cInputManager::Update()
         {
             if ((*iter).removeTimer < 0)
             {
-                if (KeyUp(m_GameInputBindings[(short)(*iter).input]))
+                short bitMask = 1 << short((*iter).input);
+                if ((gameInput & bitMask) == 0 && (prevGameInput & bitMask) != 0)
                     (*iter).removeTimer = m_GameInputBufferedFrame[(short)(*iter).input];
             }
             else

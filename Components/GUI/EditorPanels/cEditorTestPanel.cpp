@@ -11,8 +11,16 @@ void cEditorTestPanel::Init()
 {
     cEditorPanel::Init();
 
-    cBlock* ground = OBJECT->AddObject<cBlock>("Block", Vec3(0,200, 0.9f), Obj_Map);
-    ground->GetOwner()->SetScale(Vec2(10000, 10));
+    cBlock* ground = OBJECT->AddObject<cBlock>("Block", Vec3(0,400, 0.9f), Obj_Map);
+    ground->GetOwner()->SetScale(Vec2(10000, 32));
+    m_Objects.push_back(ground->GetOwner());
+
+    ground = OBJECT->AddObject<cBlock>("Block", Vec3(960,0, 0.9f), Obj_Map);
+    ground->GetOwner()->SetScale(Vec2(32, 10000));
+    m_Objects.push_back(ground->GetOwner());
+
+    ground = OBJECT->AddObject<cBlock>("Block", Vec3(-960,0, 0.9f), Obj_Map);
+    ground->GetOwner()->SetScale(Vec2(32, 10000));
     m_Objects.push_back(ground->GetOwner());
 }
 

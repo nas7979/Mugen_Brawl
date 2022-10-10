@@ -86,13 +86,15 @@ private:
     BYTE m_canCancel;
     BYTE m_InstantShieldTimer;
     Vec2 m_Velocity;
-    Vec2 m_Friction;
     float m_Damage;
     float m_Weight;
     float m_KnockbackDecPerFrame;
     float m_Shield;
     cCharacter* m_LastAttackedBy = nullptr;
+    cCharacter* m_ThrowingCharacter = nullptr;
     float m_LastShieldDamage;
+    RECT m_PrevBodyRect;
+    Vec2 m_PrevPos;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
@@ -127,6 +129,7 @@ public:
     void Reset();
     void AddVelocity(const Vec2& _vel, bool _reset = false);
     void RemoveAttachedEffect(cCharacterEffect* _effect);
+    void RemoveShield();
 
     bool HasFlag(Flag _flag) const {return (m_Flag & (int)_flag) != 0;}
     bool AddFlag(Flag _flag) {return m_Flag |= (int)_flag;}

@@ -24,14 +24,23 @@ static const char* AttachPointTypeToStringMap[6] =
     "End"
 };
 
-struct AttachPoint
+struct AttachPoint : Serializer
 {
     short x = 0;
     short y = 0;
     AttachPointType type = AttachPointType::Body;
 
     Vec2 GetPos() const {return Vec2(x, y);}
-    void Deserialize(char* _buffer, UINT& _pointer) {}
+
+    void Serialize(char* _buffer, UINT& _pointer) const override
+    {
+        CopyTo(_buffer, _pointer, &x, sizeof(AttachPoint));
+    }
+    void Deserialize(char* _buffer, UINT& _pointer) override
+    {
+        CopyFrom(_buffer, _pointer, &x, sizeof(AttachPoint));
+    }
+    size_t GetSize() const override {return sizeof(AttachPoint);}
 };
 
 class cCharacterSprite : public Serializer, public cEventKey
@@ -47,7 +56,7 @@ private:
     short m_FixedPaletteIndex = 0;
     ShortVec2 m_Momentum = ShortVec2(0, 0);
     Vec2 m_Friction = Vec2(1, 1);
-    SerializedArray<AttachPoint*> m_AttachPoints;
+    DynamicSerializedArray<AttachPoint*> m_AttachPoints;
     DynamicSerializedArray<cHitBox*> m_HitBoxes;
     DynamicSerializedArray<cThrowBox*> m_ThrowBoxes;
     DynamicSerializedArray<cHurtBox*> m_HurtBoxes;
@@ -77,6 +86,7 @@ public:
     void SetFriction(Vec2 _friction) {m_Friction = _friction;}
 
     int GetAttachPoints(AttachPoint**& _attachPoints) {_attachPoints = m_AttachPoints.GetValue(); return m_AttachPoints.GetLength();}
+    AttachPoint* GetAttachPoint(AttachPointType _type) const;
     void SetAttachPoints(AttachPoint** _attachPoints, int _length) {m_AttachPoints.SetValue(_attachPoints, _length);}
 
     int GetHitBoxes(cHitBox**& _pointer) {_pointer = m_HitBoxes.GetValue(); return m_HitBoxes.GetLength();}

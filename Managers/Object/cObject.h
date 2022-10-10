@@ -76,8 +76,8 @@ public:
     T* AddComponent()
     {
         T* component = new T(this);
-        m_Components.push_back(component);
         component->Init();
+        m_Components.push_back(component);
         return component;
     }
 

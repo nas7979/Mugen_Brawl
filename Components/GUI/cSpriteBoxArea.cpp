@@ -340,7 +340,7 @@ void cSpriteBoxArea::Update()
                         iter.box->Serialize(const_cast<char*>(serializedStr.GetBuffer()), pointer);
                     if (iter.attachPoint != nullptr)
                     {
-                        memcpy(const_cast<char*>(serializedStr.GetBuffer() + pointer), &iter.attachPoint, sizeof(::AttachPoint));
+                        memcpy(const_cast<char*>(serializedStr.GetBuffer() + pointer), iter.attachPoint, sizeof(::AttachPoint));
                         pointer += sizeof(::AttachPoint);
                     }
                 }

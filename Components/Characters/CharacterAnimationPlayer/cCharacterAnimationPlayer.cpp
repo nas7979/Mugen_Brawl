@@ -54,8 +54,6 @@ void cCharacterAnimationPlayer::Update()
         return;
 
     cCharacterSprite* sprite = m_CurAnim->GetSprite(m_CurFrame);
-    m_Renderer->SetTexture(sprite->GetTexture());
-    m_Renderer->SetOffset(sprite->GetOffset());
 
     if (m_CharacterEventHandler->GetHitStop() > 0)
         return;
@@ -76,13 +74,14 @@ void cCharacterAnimationPlayer::Update()
         m_CharacterEventHandler->OnSpriteChanged(sprite);
         for (auto& iter : sprite->GetSeparatedEventKeys())
             m_CharacterEventHandler->HandleSpriteEvent(iter.first, iter.second);
+
+        m_Renderer->SetTexture(sprite->GetTexture());
+        m_Renderer->SetOffset(sprite->GetOffset());
     }
 }
 
 void cCharacterAnimationPlayer::Render()
 {
-    return;
-    
     float xScale = m_Owner->GetScale().x;
     float scale = m_Owner->GetScale().y;
     Texture* pixel = IMAGE->GetTexture("Pixel");
@@ -161,6 +160,17 @@ void cCharacterAnimationPlayer::SetFrameImmediately(int _frame)
         m_CharacterEventHandler->HandleSpriteEvent(iter.first, iter.second);
 
     m_CharacterEventHandler->OnSpriteChanged(sprite);
+
+    m_Renderer->SetTexture(sprite->GetTexture());
+    m_Renderer->SetOffset(sprite->GetOffset());
+}
+
+void cCharacterAnimationPlayer::UpdateRendererOnly()
+{
+    cCharacterAnimation* anim = m_NextAnim == nullptr ? m_CurAnim : m_NextAnim;
+    cCharacterSprite* sprite = anim->GetSprite(m_NextFrame == -1 ? m_CurFrame : m_NextFrame);
+    m_Renderer->SetTexture(sprite->GetTexture());
+    m_Renderer->SetOffset(sprite->GetOffset());
 }
 
 void cCharacterAnimationPlayer::WithBoxes(const std::function<void(cSpriteBox*, cSpriteBoxArea::DrawType)>& _func)
