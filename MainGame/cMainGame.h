@@ -10,4 +10,7 @@ public:
     void Release();
     void OnLostDevice();
     void OnResetDevice();
+
+private:
+    bool m_PlayInFrameModeEnabled = false;
 };

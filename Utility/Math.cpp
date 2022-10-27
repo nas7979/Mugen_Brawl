@@ -36,3 +36,10 @@ float Math::Sign(float _value)
     return 0;
 }
 
+Vec2 Math::RotateVec2(Vec2 _vec, float _rot)
+{
+    float radRot = D3DXToRadian(_rot);
+    float c = cos(radRot);
+    float s = sin(radRot);
+    return Vec2(_vec.x * c + _vec.y * -s, _vec.x * s + _vec.y * c);
+}

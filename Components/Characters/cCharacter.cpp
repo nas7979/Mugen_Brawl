@@ -432,17 +432,19 @@ void cCharacter::OnThrow(cCharacter* _to, cThrowBox* _myThrowBox, cBodyBox* _ene
 
 void cCharacter::OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
+    if (m_isCollidedWithWall || (!_with->m_isCollidedWithWall && m_ThrowingCharacter == _with))
+        return;
+    
     float collDirX = Sign(m_Owner->GetPos().x - _with->GetOwner()->GetPos().x);
     
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * collDirX, 0, 0) * 0.5f);
-    _with->GetOwner()->SetPos(_with->GetOwner()->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * -collDirX, 0, 0) * 0.5f);
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * collDirX, 0, 0) * (_with->m_isCollidedWithWall ? 1 : 0.5f));
 
     UpdateRects();
-    _with->UpdateRects();
 }
 
 void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
+    m_isCollidedWithWall = true;
     const RECT& wallRect = _with->GetRect();
 
     Vec2 collDir;
@@ -461,25 +463,6 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
             m_Owner->SetPos(m_Owner->GetPos() + Vec3(wallRect.left -_bodyRect.right, 0, 0));
         else
             m_Owner->SetPos(m_Owner->GetPos() + Vec3(wallRect.right -_bodyRect.left, 0, 0));
-
-        UpdateRects();
-        
-        for (auto& iter : OBJECT->GetObjects(Obj_Character))
-        {
-            cCharacter* other = iter->GetComponent<cCharacter>();
-            if (m_Team == other->GetTeam())
-                continue;
-
-            RECT overlapped;
-            if (IntersectRect(&overlapped, &m_BodyBoxes[0], &other->GetBodyBoxes()[0]))
-            {
-                float collDirX = Sign(m_Owner->GetPos().x - other->GetOwner()->GetPos().x);
-    
-                other->GetOwner()->SetPos(other->GetOwner()->GetPos() + Vec3((overlapped.right - overlapped.left + 2) * -collDirX, 0, 0));
-
-                other->UpdateRects();
-            }
-        }
     }
 
     if (m_State == State::Hit && HasFlag(Flag::InAir))
@@ -498,8 +481,8 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
         else
         {
             Vec2 normalizedVel;
-            Vec2 projectedWallNormalVec = -collDir * sin(atan2(m_Velocity.y, m_Velocity.x));
             D3DXVec2Normalize(&normalizedVel, &m_Velocity);
+            Vec2 projectedWallNormalVec = -collDir * D3DXVec2Dot(&collDir, &normalizedVel);
             Vec2 reflectedVel = normalizedVel + projectedWallNormalVec * 2;
             m_Velocity = reflectedVel * velocity * 0.75f;
             m_HitStun += 10;
@@ -586,6 +569,7 @@ void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& 
 
 void cCharacter::CollisionCheck()
 {
+    m_isCollidedWithWall = false;
     if (m_State == State::Thrown)
         return;
     
@@ -654,7 +638,7 @@ void cCharacter::CollisionCheck()
         cBodyBox** bodyBoxes;
         int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
         RECT bodyRectForGround = m_BodyBoxes[0];
-        bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom();
+        bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom() * m_Owner->GetScale().y;
 
         for (auto& iter : OBJECT->GetObjects(Obj_Map))
         {
@@ -694,6 +678,7 @@ void cCharacter::CollisionCheck()
         
         cObject* object = m_ThrowingCharacter->GetOwner();
         AttachPoint* attachTo = curSprite->GetAttachPoint(AttachPointType::AttachTo);
+        Vec2 scaledAttachTo = Vec2(attachTo->x * m_Owner->GetScale().x, attachTo->y * m_Owner->GetScale().y);
         AttachPoint* attachPoint;
         curSprite->FindEventKey("AttachTo", &eventKey);
         cCharacterSprite* enemySprite = m_ThrowingCharacter->GetCurrentSprite();
@@ -705,14 +690,17 @@ void cCharacter::CollisionCheck()
                 break;
             }
         }
-        
-        Vec3 myPos = m_Owner->GetPos();
-        object->SetPos(Vec3(myPos.x + attachTo->x * Sign(m_Owner->GetScale().x) - attachPoint->x * Sign(object->GetScale().x), myPos.y + attachTo->y - attachPoint->y, object->GetPos().z));
 
         curSprite->FindEventKey("EnemyRot", &eventKey);
         object->SetRot(atoi(eventKey.c_str()) * (m_Owner->GetScale().x > 0 ? 1 : -1));
-
         m_ThrowingCharacter->SetDirection(Sign(m_Owner->GetScale().x) * (curSprite->FindEventKey("EnemyFlipX") ? 1 : -1));
+        
+        Vec3 myPos = m_Owner->GetPos();
+        Vec2 rotatedAttachToCenter = RotateVec2(Vec2((attachPoint->x - enemySprite->GetOffset().x) * object->GetScale().x, (attachPoint->y - enemySprite->GetOffset().y) * object->GetScale().y), object->GetRot());
+        object->SetPos(Vec3(
+            myPos.x + scaledAttachTo.x - rotatedAttachToCenter.x - enemySprite->GetOffset().x * object->GetScale().x,
+            myPos.y + scaledAttachTo.y - rotatedAttachToCenter.y - enemySprite->GetOffset().y * object->GetScale().y,
+            object->GetPos().z));
     }
 }
 
@@ -984,6 +972,7 @@ void cCharacter::Reset()
     m_LastAttackedBy = nullptr;
     m_LastShieldDamage = 0;
     m_ThrowingCharacter = nullptr;
+    m_isCollidedWithWall = false;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)

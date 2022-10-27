@@ -82,7 +82,8 @@ private:
     char m_JumpDir;
     BYTE m_PlayerIndex;
     BYTE m_Team;
-    short m_HitStop;
+    char m_HitStop;
+    BYTE m_isCollidedWithWall;
     BYTE m_canCancel;
     BYTE m_InstantShieldTimer;
     Vec2 m_Velocity;

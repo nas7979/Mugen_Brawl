@@ -27,6 +27,13 @@ void cMainGame::Update()
 {
     GGPO->Update();
     INPUT->Update();
+
+    if (INPUT->KeyDown('9'))
+        m_PlayInFrameModeEnabled = !m_PlayInFrameModeEnabled;
+
+    if (m_PlayInFrameModeEnabled && !INPUT->KeyDown('0'))
+        return;
+    
     SCENE->Update();
     OBJECT->Update();
     CAMERA->Update();
