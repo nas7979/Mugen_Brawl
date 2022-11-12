@@ -41,6 +41,7 @@ public:
     void SetFrame(int _frame);
     void SetFrameImmediately(int _frame);
     int GetCurrentFrame() const {return m_CurFrame;}
+    void SetFrameTimer(float _timer) {m_FrameTimer = _timer;}
     cCharacterSprite* GetCurrentSprite() const {return m_CurAnim->GetSprite(m_CurFrame);}
     void UpdateRendererOnly();
     

@@ -83,8 +83,8 @@ private:
     BYTE m_PlayerIndex;
     BYTE m_Team;
     char m_HitStop;
-    BYTE m_isCollidedWithWall;
-    BYTE m_canCancel;
+    BYTE m_IsCollidedWithWall;
+    BYTE m_CanCancel;
     BYTE m_InstantShieldTimer;
     Vec2 m_Velocity;
     float m_Damage;
@@ -96,6 +96,7 @@ private:
     float m_LastShieldDamage;
     RECT m_PrevBodyRect;
     Vec2 m_PrevPos;
+    cBlock* m_CurGround = nullptr;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 

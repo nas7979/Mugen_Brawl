@@ -57,8 +57,10 @@ void cCharacter::Update()
         
         return;
     }
+    else
+        m_HitStop = -1;
 
-    if (m_canCancel && GetCurrentSprite()->FindEventKey("CA"))
+    if (m_CanCancel && GetCurrentSprite()->FindEventKey("CA"))
     {
         std::string cancelTable;
         if (m_AnimPlayer->GetCurrentAnimation()->FindEventKey("CancelInto", &cancelTable))
@@ -66,7 +68,7 @@ void cCharacter::Update()
             if (CheckInputs(&cancelTable))
             {
                 m_AttackedCharacters.GetValue()->clear();
-                m_canCancel = false;
+                m_CanCancel = false;
                 return;
             }
         }
@@ -412,7 +414,7 @@ void cCharacter::OnHurt(cCharacter* _by, cHurtBox* _myHurtBox, cHitBox* _enemyHi
 
 void cCharacter::OnHit(cCharacter* _to, cHurtBox* _enemyHurtBox, cHitBox* _myHitBox, RECT _overlappedRect)
 {
-    m_canCancel = true;
+    m_CanCancel = true;
     m_AttackedCharacters.GetValue()->push_back(_to->GetOwner()->GetUID());
     
     m_ThrowingCharacter = nullptr;
@@ -432,29 +434,36 @@ void cCharacter::OnThrow(cCharacter* _to, cThrowBox* _myThrowBox, cBodyBox* _ene
 
 void cCharacter::OnCollisionWithCharacter(cCharacter* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
-    if (m_isCollidedWithWall || (!_with->m_isCollidedWithWall && m_ThrowingCharacter == _with))
+    if (m_IsCollidedWithWall || (!_with->m_IsCollidedWithWall && m_ThrowingCharacter == _with))
         return;
     
     float collDirX = Sign(m_Owner->GetPos().x - _with->GetOwner()->GetPos().x);
     
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * collDirX, 0, 0) * (_with->m_isCollidedWithWall ? 1 : 0.5f));
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3((_overlapped.right - _overlapped.left + 2) * collDirX, 0, 0) * (_with->m_IsCollidedWithWall ? 1 : 0.5f));
 
     UpdateRects();
 }
 
 void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const RECT& _overlapped)
 {
-    m_isCollidedWithWall = true;
+    m_IsCollidedWithWall = true;
     const RECT& wallRect = _with->GetRect();
 
     Vec2 collDir;
     if ((m_PrevBodyRect.left < wallRect.right && m_PrevBodyRect.left > wallRect.left) || (m_PrevBodyRect.right < wallRect.right && m_PrevBodyRect.right > wallRect.left))
     {
-        collDir = Vec2(0, Sign(_with->GetOwner()->GetPos().y - m_PrevPos.y));
+        collDir = Vec2(0, Sign(_with->GetOwner()->GetPos().y - m_PrevBodyRect.top));
         if (collDir.y > 0)
+        {
+            m_CurGround = _with;
             m_Owner->SetPos(m_Owner->GetPos() + Vec3(0, wallRect.top -_bodyRect.bottom, 0));
+        }
         else
+        {
+            if (m_State == State::Idle)
+                m_Velocity.y = 0;
             m_Owner->SetPos(m_Owner->GetPos() + Vec3(0, wallRect.bottom -_bodyRect.top, 0));
+        }
     }
     else
     {
@@ -537,6 +546,7 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
         effect->GetOwner()->SetScale(m_Owner->GetScale());
         cCharacterAnimation* anim = m_Data->GetAnimation(_value);
         effect->SetAnimation(m_Data, anim);
+        effect->GetComponent<cCharacterAnimationPlayer>()->SetFrameTimer(-1);
         effect->SetFrom(this);
 
         if (anim->FindEventKey("Attach"))
@@ -569,7 +579,11 @@ void cCharacter::HandleBodyBoxEvent(const std::string& _key, const std::string& 
 
 void cCharacter::CollisionCheck()
 {
-    m_isCollidedWithWall = false;
+    m_IsCollidedWithWall = false;
+
+    if (HasFlag(Flag::InAir))
+        m_CurGround = nullptr;
+    
     if (m_State == State::Thrown)
         return;
     
@@ -633,19 +647,29 @@ void cCharacter::CollisionCheck()
         }
     }
     
-    if (m_HitStop == 0)
+    if (m_HitStop < 0)
     {
         cBodyBox** bodyBoxes;
         int bodyBoxCount = curSprite->GetBodyBoxes(bodyBoxes);
+        int collideWithWallCount = 0;
         RECT bodyRectForGround = m_BodyBoxes[0];
         bodyRectForGround.bottom -= bodyBoxes[0]->GetBottom() * m_Owner->GetScale().y;
 
         for (auto& iter : OBJECT->GetObjects(Obj_Map))
         {
             cBlock* block = iter->GetComponent<cBlock>();
-            if (IntersectRect(&overlapped, &bodyRectForGround, &block->GetRect()))
+            const RECT& wallRect = block->GetRect();
+            if (IntersectRect(&overlapped, &bodyRectForGround, &wallRect))
             {
-                OnCollisionWithMap(block, bodyRectForGround, overlapped);
+                if (HasFlag(Flag::InAir) && (bodyRectForGround.left < wallRect.left || bodyRectForGround.right > wallRect.right))
+                {
+                    if (IntersectRect(&overlapped, &m_BodyBoxes[0], &wallRect))
+                        OnCollisionWithMap(block, m_BodyBoxes[0], overlapped);
+                    else
+                        continue;
+                }
+                else
+                    OnCollisionWithMap(block, bodyRectForGround, overlapped);
 
                 Vec3 pos = m_Owner->GetPos();
                 Vec2 scale = m_Owner->GetScale();
@@ -663,9 +687,30 @@ void cCharacter::CollisionCheck()
                     (LONG)(pos.x + box->GetLeft() * scale.x),
                     (LONG)(pos.y + box->GetBottom() * scale.y)
                 };
+                
+                if (collideWithWallCount++ == 2)
+                    break;
             }
         }
 
+        if (m_CurGround != nullptr)
+        {
+            const RECT& wallRect = m_CurGround->GetRect();
+            if ((m_PrevBodyRect.left >= wallRect.right || m_PrevBodyRect.left <= wallRect.left) && (m_PrevBodyRect.right >= wallRect.right || m_PrevBodyRect.right <= wallRect.left)) {
+                m_CurGround = nullptr;
+                if (m_State == State::Idle || m_State == State::Hit)
+                {
+                    INPUT->ClearInputBuffer(m_PlayerIndex);
+                    RemoveFlag(Flag::Crouching);
+                    RemoveFlag(Flag::Standing);
+                    RemoveFlag(Flag::Dashing);
+                    AddFlag(Flag::InAir);
+
+                    m_AirActionLimit--;
+                }
+            }
+        }
+        
         m_PrevPos = (Vec2)m_Owner->GetPos();
         m_PrevBodyRect = bodyRectForGround;
     }
@@ -921,18 +966,19 @@ void cCharacter::SetState(State _state)
                 SetAnimation("Hit_Ground");
                 m_AnimPlayer->UpdateRendererOnly();
             }
-
-            for (auto& iter : *m_AttachedEffects.GetValue())
-            {
-                iter->GetOwner()->Destroy();
-            }
-            m_AttachedEffects.GetValue()->clear();
             break;
         }
     }
 
+    for (auto& iter : *m_AttachedEffects.GetValue())
+    {
+        iter->GetOwner()->SetActive(false);
+        iter->GetOwner()->Destroy();
+    }
+    m_AttachedEffects.GetValue()->clear();
+    
     m_AttackedCharacters.GetValue()->clear();
-    m_canCancel = false;
+    m_CanCancel = false;
     m_State = _state;
 }
 
@@ -966,13 +1012,14 @@ void cCharacter::Reset()
     m_HitStun = 0;
     m_KnockbackDecPerFrame = 0;
     m_HitStop = 0;
-    m_canCancel = false;
+    m_CanCancel = false;
     m_Shield = m_Data->GetShieldSize();
     m_InstantShieldTimer = 0;
     m_LastAttackedBy = nullptr;
     m_LastShieldDamage = 0;
     m_ThrowingCharacter = nullptr;
-    m_isCollidedWithWall = false;
+    m_IsCollidedWithWall = false;
+    m_CurGround = nullptr;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
