@@ -125,6 +125,7 @@ public:
     float GetWeight() const {return m_Weight;}
     void SetHitStop(int _hitStop) {m_HitStop = _hitStop;}
     int GetHitStop() const override {return m_HitStop;}
+    float GetDir() const {return Sign(m_Owner->GetScale().x);}
     
     void SetData(cCharacterData* _data);
     void SetPalette(int _index);

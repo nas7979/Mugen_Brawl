@@ -20,9 +20,6 @@ namespace Utility
     int HexToInt(const std::string& _hex);
     std::string IntToHex(int _int);
 
-    template<typename T>
-    bool Contains(const std::vector<T>& _vec, T _find);
-
     template <typename T>
     bool Contains(const std::vector<T>& _vec, T _find)
     {
@@ -32,5 +29,27 @@ namespace Utility
                 return true;
         }
         return false;
+    }
+
+    template <typename T>
+    int IndexOf(const std::vector<T>& _vec, T _find)
+    {
+        for (int i = 0; i < _vec.size(); i++)
+        {
+            if (_vec[i] == _find)
+                return i;
+        }
+        return -1;
+    }
+
+    template <typename T>
+    int IndexOf(const T*& _vec, int _arraySize, T _find)
+    {
+        for (int i = 0; i < _arraySize; i++)
+        {
+            if (_vec[i] == _find)
+                return i;
+        }
+        return -1;
     }
 };

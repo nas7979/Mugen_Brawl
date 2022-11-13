@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "cMsgProcHandler.h"
 #include "../../Components/GUI/cGUI.h"
+#include "../../GGPO/lib/ggpo/game_input.h"
 
 class cCharacter;
 
@@ -59,10 +60,10 @@ private:
     std::list<Action> m_RedoQueue;
     const int m_DoQueueMaxCount = 100;
     short m_GameInput[MAX_PLAYER];
-    unsigned char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
-    unsigned char m_GameInputBindings2P[16] {VK_UP, VK_LEFT, VK_DOWN, VK_RIGHT, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_OEM_PLUS, VK_NUMPAD6, };
-    char m_GameInputToNotations[16] {'8', '4', '2', '6', 'a', 'b', 'c', 'd', 'r', };
-    char m_GameInputBufferedFrame[16] {6, 12, 12, 12, 4, 4, 4, -1, -1, };
+    const unsigned char m_GameInputBindings[16] {'W', 'A', 'S', 'D', 'H', 'J', 'K', 'L', 'G', };
+    const unsigned char m_GameInputBindings2P[16] {VK_UP, VK_LEFT, VK_DOWN, VK_RIGHT, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_OEM_PLUS, VK_NUMPAD6, };
+    const char* m_GameInputToNotations = new char[16] {'8', '4', '2', '6', 'a', 'b', 'c', 'd', 'r', };
+    const char m_GameInputBufferedFrame[16] {6, 12, 12, 12, 4, 4, 4, -1, -1, };
     short m_GameInputPressTimer[MAX_PLAYER][16] {{0, }, };
 
 public:
@@ -73,6 +74,7 @@ public:
     void SubscribeMsgProcHandler(cMsgProcHandler* _handler) {m_MsgProcHandlers.push_back(_handler);}
     void UnsubscribeMsgProcHandler(cMsgProcHandler* _handler);
     void AddToClickedGUIs(cGUI* _gui) {m_ClickedGUIs.push_back(_gui);}
+    IngameInput NotationToInput(char _notation) {return (IngameInput)IndexOf<char>(m_GameInputToNotations, 16, _notation);}
 
     bool SetClipboard(UINT _format, Serializer& _serializer);
     bool GetClipboard(UINT _format, Serializer& _serializer);

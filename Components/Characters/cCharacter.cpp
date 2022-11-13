@@ -78,7 +78,8 @@ void cCharacter::Update()
     {
         if (m_State == State::Idle || m_State == State::BlockStun)
         {
-            m_Velocity.y = min(m_Velocity.y + m_Weight / 60.f, (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f);
+            if (m_Velocity.y < (HasFlag(Flag::FastFall) ? m_Data->GetFastFallSpeed() : m_Data->GetFallSpeed()) / 60.f)
+                m_Velocity.y = m_Velocity.y + m_Weight / 60.f;
         }
         else
         {
@@ -503,12 +504,28 @@ void cCharacter::OnCollisionWithMap(cBlock* _with, const RECT& _bodyRect, const 
         {
             if (collDir.y > 0)
             {
+                for (auto iter = m_AttachedEffects.GetValue()->begin(); iter != m_AttachedEffects.GetValue()->end();)
+                {
+                    if ((*iter)->GetComponent<cCharacterAnimationPlayer>()->GetCurrentAnimation()->FindEventKey("DetachOnLand"))
+                    {
+                        iter = m_AttachedEffects.GetValue()->erase(iter);
+                        continue;
+                    }
+                    iter++;
+                }
+                
                 RemoveFlag(Flag::InAir);
                 RemoveFlag(Flag::Dashing);
-                SetAnimationImmediately("Land");
                 SetState(State::Action);
                 m_Velocity = Vec2(0, 0);
                 m_AirActionLimit = m_Data->GetAirMovementLimit();
+
+                std::string onLand;
+                if (m_AnimPlayer->GetCurrentAnimation()->FindEventKey("OnLand", &onLand))
+                    SetAnimationImmediately(onLand);
+                else
+                    SetAnimationImmediately("Land");
+
             }
         }
     }
@@ -559,6 +576,20 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
         SetAnimationImmediately(m_AnimPlayer->GetCurrentAnimation()->GetKey() + "_Miss");
         return;
     }
+
+    if (_key == "SetDir")
+    {
+        SetDirection(GetDir() * atoi(_value.c_str()));
+        return;
+    }
+
+    if (_key == "OnHeld")
+    {
+        const std::string& curAnimKey = m_AnimPlayer->GetCurrentAnimation()->GetKey();
+        if (INPUT->CheckGameInput(INPUT->NotationToInput(curAnimKey[curAnimKey.size() - 1]), m_PlayerIndex))
+            SetAnimationImmediately(_value);
+        return;
+    }
 }
 
 void cCharacter::HandleHurtBoxEvent(const std::string& _key, const std::string& _value)
@@ -593,11 +624,12 @@ void cCharacter::CollisionCheck()
     for (auto& iter : OBJECT->GetObjects(Obj_Character))
     {
         cCharacter* other = iter->GetComponent<cCharacter>();
-        if (m_Team == other->GetTeam())
-            continue;
         
         if (IntersectRect(&overlapped, &m_BodyBoxes[0], &other->GetBodyBoxes()[0]))
             OnCollisionWithCharacter(other, m_BodyBoxes[0], overlapped);
+
+        if (m_Team == other->GetTeam())
+            continue;
 
         if (!Contains<int>(*m_AttackedCharacters.GetValue(), iter->GetUID()))
         {
@@ -698,7 +730,7 @@ void cCharacter::CollisionCheck()
             const RECT& wallRect = m_CurGround->GetRect();
             if ((m_PrevBodyRect.left >= wallRect.right || m_PrevBodyRect.left <= wallRect.left) && (m_PrevBodyRect.right >= wallRect.right || m_PrevBodyRect.right <= wallRect.left)) {
                 m_CurGround = nullptr;
-                if (m_State == State::Idle || m_State == State::Hit)
+                if (m_State == State::Idle || m_State == State::Hit || m_State == State::Action)
                 {
                     INPUT->ClearInputBuffer(m_PlayerIndex);
                     RemoveFlag(Flag::Crouching);
@@ -1048,6 +1080,7 @@ void cCharacter::RemoveAttachedEffect(cCharacterEffect* _effect)
             m_AttachedEffects.GetValue()->erase(iter);
             return;
         }
+        iter++;
     }
 }
 
