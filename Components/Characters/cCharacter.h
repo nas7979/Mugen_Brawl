@@ -97,6 +97,7 @@ private:
     RECT m_PrevBodyRect;
     Vec2 m_PrevPos;
     cBlock* m_CurGround = nullptr;
+    BYTE m_BlockAirDashTimer;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
@@ -133,6 +134,7 @@ public:
     void AddVelocity(const Vec2& _vel, bool _reset = false);
     void RemoveAttachedEffect(cCharacterEffect* _effect);
     void RemoveShield();
+    bool HasAnyShield() const {return HasFlag((Flag)((int)Flag::Shield_Air | (int)Flag::Shield_High | (int)Flag::Shield_Mid | (int)Flag::Shield_Low));}
 
     bool HasFlag(Flag _flag) const {return (m_Flag & (int)_flag) != 0;}
     bool AddFlag(Flag _flag) {return m_Flag |= (int)_flag;}

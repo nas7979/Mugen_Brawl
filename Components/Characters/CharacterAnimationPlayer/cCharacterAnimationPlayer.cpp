@@ -75,6 +75,7 @@ void cCharacterAnimationPlayer::Update()
         for (auto& iter : sprite->GetSeparatedEventKeys())
             m_CharacterEventHandler->HandleSpriteEvent(iter.first, iter.second);
 
+        sprite = GetCurrentSprite();
         m_Renderer->SetTexture(sprite->GetTexture());
         m_Renderer->SetOffset(sprite->GetOffset());
     }
