@@ -19,6 +19,9 @@ void cCharacter::Init()
 
 void cCharacter::Update()
 {
+    if (m_KaraCancelTimer > 0)
+        m_KaraCancelTimer--;
+    
     if (m_HitStop > 0)
     {
         m_HitStop--;
@@ -111,156 +114,12 @@ void cCharacter::Update()
     
     if (m_State == State::Idle)
     {
-        bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex);
-        bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex);
-        int prevDir = Sign(m_Owner->GetScale().x);
-        bool hasAnyShieldBeforeUpdate = HasAnyShield();
-
-        if (!hasAnyShieldBeforeUpdate)
-        {
-            if (isRightPressed && isLeftPressed)
-            {
-                if (INPUT->GetGameInputPressTimer(IngameInput::Right, m_PlayerIndex) > INPUT->GetGameInputPressTimer(IngameInput::Left, m_PlayerIndex))
-                    isRightPressed = false;
-                else
-                    isLeftPressed = false;
-            }
-            else if ((!isRightPressed && !isLeftPressed) || HasFlag(Flag::Crouching))
-            {
-                RemoveFlag(Flag::Dashing);
-                if (!HasFlag(Flag::InAir))
-                {
-                    if (abs(m_Velocity.x) > m_Data->GetWalkSpeed() / 60.f)
-                        m_Velocity.x *= 0.9f;
-                    else
-                        m_Velocity.x = 0;   
-                }
-            }
-
-            if (isLeftPressed)
-            {
-                SetDirection(-1);
-            }
-
-            if (isRightPressed)
-            {
-                SetDirection(1);
-            }
-        }
-
-        if (!HasFlag(Flag::InAir))
-        {
-            if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
-            {
-                if (!hasAnyShieldBeforeUpdate && HasFlag(Flag::Standing))
-                {
-                    SetAnimation("CrouchStart");
-                }
-                
-                RemoveFlag(Flag::Standing);
-                AddFlag(Flag::Crouching);
-                RemoveFlag(Flag::Dashing);
-            }
-            else
-            {
-                if (!hasAnyShieldBeforeUpdate && HasFlag(Flag::Crouching))
-                {
-                    SetAnimation("CrouchEnd");
-                }
-                
-                RemoveFlag(Flag::Crouching);
-                AddFlag(Flag::Standing);
-            }
-        }   
-        
-        if (!hasAnyShieldBeforeUpdate && CheckInputs(nullptr))
-        {
-            return;
-        }
-
-        RemoveShield();
-        if (INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex))
-        {
-            if (m_Shield > 0)
-            {
-                if (HasFlag(Flag::InAir))
-                {
-                    AddFlag(Flag::Shield_Air);
-                    SetAnimationImmediately("Shield_Air");
-                }
-                else if (INPUT->CheckGameInput(IngameInput::Up, m_PlayerIndex))
-                {
-                    AddFlag(Flag::Shield_High);
-                    SetAnimationImmediately("Shield_High");
-                }
-                else if (HasFlag(Flag::Crouching))
-                {
-                    AddFlag(Flag::Shield_Low);
-                    SetAnimationImmediately("Shield_Low");
-                }
-                else
-                {
-                    AddFlag(Flag::Shield_Mid);
-                    SetAnimationImmediately("Shield_Mid");
-                }
-
-                isLeftPressed = isRightPressed = false;
-                m_Shield -= m_Data->GetShieldDecSpeed() / 60.f;
-                if (!HasFlag(Flag::InAir))
-                    m_Velocity.x = 0;
-            }
-        }
-        else
-        {
-            if (hasAnyShieldBeforeUpdate)
-            {
-                SetAnimationImmediately("ShieldEnd");
-                SetState(State::Action);
-                isLeftPressed = isRightPressed = false;
-            }
-        }
-        
-        if (HasFlag(Flag::Standing))
-        {
-            if (isLeftPressed)
-            {
-                SetDirection(-1);
-                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
-                    SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
-            
-                m_Velocity.x = -(HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-            }
-
-            if (isRightPressed)
-            {
-                SetDirection(1);
-                if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
-                    SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
-                
-                m_Velocity.x = (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
-            }
-
-            if (prevDir != Sign(m_Owner->GetScale().x))
-            {
-                RemoveFlag(Flag::Dashing);
-                SetAnimation("TurnStand");
-            }
-        }
-        else if (HasFlag(Flag::Crouching))
-        {
-        }
-
-        if (!hasAnyShieldBeforeUpdate && ((!isLeftPressed && !isRightPressed) || HasFlag(Flag::Crouching)))
-        {
-            if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd") && !CheckCurAnimation("TurnStand"))
-            {
-                SetAnimationImmediately("Idle");
-            }
-            else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
-            {
-                SetAnimationImmediately("Crouch");
-            }
-        }
+        UpdateOnIdle();
+    }
+    else if (m_State == State::Action)
+    {
+        if (m_KaraCancelTimer > 0)
+            CheckKaraCancelableInputs(nullptr);
     }
     else if (m_State == State::Down)
     {
@@ -306,10 +165,11 @@ void cCharacter::Update()
     {
         m_Shield = min(m_Shield + m_Data->GetShieldDecSpeed() / 120.f, m_Data->GetShieldSize());
     }
-
-    m_Owner->SetPos(m_Owner->GetPos() + Vec3(m_Velocity.x, m_Velocity.y, 0));
     
     cCharacterSprite* curSprite = m_AnimPlayer->GetCurrentSprite();
+
+    m_Owner->SetPos(m_Owner->GetPos() + Vec3(curSprite->GetFriction().x == 0 ? 0 : m_Velocity.x,  curSprite->GetFriction().y == 0 ? 0 : m_Velocity.y, 0));
+    
     m_Velocity.x *= curSprite->GetFriction().x;
     m_Velocity.y *= curSprite->GetFriction().y;
     
@@ -827,10 +687,167 @@ size_t cCharacter::GetSize() const
     return 0;
 }
 
-bool cCharacter::CheckInputs(std::string* _cancelTable)
+void cCharacter::UpdateOnIdle()
+{
+    bool isRightPressed = INPUT->CheckGameInput(IngameInput::Right, m_PlayerIndex);
+    bool isLeftPressed = INPUT->CheckGameInput(IngameInput::Left, m_PlayerIndex);
+    int prevDir = Sign(m_Owner->GetScale().x);
+    bool hasAnyShieldBeforeUpdate = HasAnyShield();
+
+    if (!hasAnyShieldBeforeUpdate)
+    {
+        if (isRightPressed && isLeftPressed)
+        {
+            if (INPUT->GetGameInputPressTimer(IngameInput::Right, m_PlayerIndex) > INPUT->GetGameInputPressTimer(IngameInput::Left, m_PlayerIndex))
+                isRightPressed = false;
+            else
+                isLeftPressed = false;
+        }
+        else if ((!isRightPressed && !isLeftPressed) || HasFlag(Flag::Crouching))
+        {
+            RemoveFlag(Flag::Dashing);
+            if (!HasFlag(Flag::InAir))
+            {
+                if (abs(m_Velocity.x) > m_Data->GetWalkSpeed() / 60.f)
+                    m_Velocity.x *= 0.9f;
+                else
+                    m_Velocity.x = 0;   
+            }
+        }
+
+        if (isLeftPressed)
+        {
+            SetDirection(-1);
+        }
+
+        if (isRightPressed)
+        {
+            SetDirection(1);
+        }
+    }
+
+    if (!HasFlag(Flag::InAir))
+    {
+        if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
+        {
+            if (!hasAnyShieldBeforeUpdate && HasFlag(Flag::Standing))
+            {
+                SetAnimation("CrouchStart");
+            }
+            
+            RemoveFlag(Flag::Standing);
+            AddFlag(Flag::Crouching);
+            RemoveFlag(Flag::Dashing);
+        }
+        else
+        {
+            if (!hasAnyShieldBeforeUpdate && HasFlag(Flag::Crouching))
+            {
+                SetAnimation("CrouchEnd");
+            }
+            
+            RemoveFlag(Flag::Crouching);
+            AddFlag(Flag::Standing);
+        }
+    }   
+    
+    if (!hasAnyShieldBeforeUpdate && CheckInputs(nullptr))
+    {
+        return;
+    }
+
+    RemoveShield();
+    if (INPUT->CheckGameInput(IngameInput::Shield, m_PlayerIndex))
+    {
+        if (m_Shield > 0)
+        {
+            if (HasFlag(Flag::InAir))
+            {
+                AddFlag(Flag::Shield_Air);
+                SetAnimationImmediately("Shield_Air");
+            }
+            else if (INPUT->CheckGameInput(IngameInput::Up, m_PlayerIndex))
+            {
+                AddFlag(Flag::Shield_High);
+                SetAnimationImmediately("Shield_High");
+            }
+            else if (HasFlag(Flag::Crouching))
+            {
+                AddFlag(Flag::Shield_Low);
+                SetAnimationImmediately("Shield_Low");
+            }
+            else
+            {
+                AddFlag(Flag::Shield_Mid);
+                SetAnimationImmediately("Shield_Mid");
+            }
+
+            isLeftPressed = isRightPressed = false;
+            m_Shield -= m_Data->GetShieldDecSpeed() / 60.f;
+            if (!HasFlag(Flag::InAir))
+                m_Velocity.x = 0;
+        }
+    }
+    else
+    {
+        if (hasAnyShieldBeforeUpdate)
+        {
+            SetAnimationImmediately("ShieldEnd");
+            SetState(State::Action);
+            isLeftPressed = isRightPressed = false;
+        }
+    }
+    
+    if (HasFlag(Flag::Standing))
+    {
+        if (isLeftPressed)
+        {
+            SetDirection(-1);
+            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
+                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+        
+            m_Velocity.x = -(HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+        }
+
+        if (isRightPressed)
+        {
+            SetDirection(1);
+            if (!(HasFlag(Flag::Dashing) ? CheckCurAnimation("Dash") : CheckCurAnimation("Walk")) && !CheckCurAnimation("TurnStand"))
+                SetAnimation(HasFlag(Flag::Dashing) ? "Dash" : "Walk");
+            
+            m_Velocity.x = (HasFlag(Flag::Dashing) ? m_Data->GetDashSpeed() : m_Data->GetWalkSpeed()) / 60.f;
+        }
+
+        if (prevDir != Sign(m_Owner->GetScale().x))
+        {
+            RemoveFlag(Flag::Dashing);
+            SetAnimation("TurnStand");
+        }
+    }
+    else if (HasFlag(Flag::Crouching))
+    {
+    }
+
+    if (!hasAnyShieldBeforeUpdate && ((!isLeftPressed && !isRightPressed) || HasFlag(Flag::Crouching)))
+    {
+        if (HasFlag(Flag::Standing) && !CheckCurAnimation("Idle") && !CheckCurAnimation("CrouchEnd") && !CheckCurAnimation("TurnStand"))
+        {
+            SetAnimationImmediately("Idle");
+        }
+        else if (HasFlag(Flag::Crouching) && !CheckCurAnimation("Crouch") && !CheckCurAnimation("CrouchStart") && !CheckCurAnimation("TurnCrouch"))
+        {
+            SetAnimationImmediately("Crouch");
+        }
+    }
+}
+
+bool cCharacter::CheckInputs(const std::string* _cancelTable)
 {
     if (INPUT->GetInputBufferSize(m_PlayerIndex) == 0)
         return false;
+
+    if (CheckKaraCancelableInputs(_cancelTable))
+        return true;
 
     if (_cancelTable == nullptr || _cancelTable->find("SP") != std::string::npos)
     {
@@ -893,6 +910,8 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
         SOUND->Play(sound->GetSound(), sound->GetVolume());
 
         INPUT->ClearInputBuffer(m_PlayerIndex);
+
+        m_KaraCancelTimer = 3;
         return true;
     }
 
@@ -953,6 +972,28 @@ bool cCharacter::CheckInputs(std::string* _cancelTable)
         }
     }
 
+    return false;
+}
+
+bool cCharacter::CheckKaraCancelableInputs(const std::string* _cancelTable)
+{
+    if (INPUT->CheckGameInput(IngameInput::A, m_PlayerIndex) && INPUT->CheckGameInput(IngameInput::B, m_PlayerIndex))
+    {
+        if (HasFlag(Flag::InAir))
+        {
+            SetAnimationImmediately("AirThrow");
+        }
+        else
+        {
+            SetAnimationImmediately("Throw");
+        }
+        
+        SetState(State::Action);
+        m_KaraCancelTimer = 0;
+        return true;
+    }
+
+    
     return false;
 }
 

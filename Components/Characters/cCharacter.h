@@ -98,6 +98,7 @@ private:
     Vec2 m_PrevPos;
     cBlock* m_CurGround = nullptr;
     BYTE m_BlockAirDashTimer;
+    BYTE m_KaraCancelTimer;
 
     cCharacterAnimationPlayer* m_AnimPlayer;
 
@@ -108,10 +109,13 @@ private:
     SerializedVector<int> m_AttackedCharacters;
     SerializedVector<cCharacterEffect*> m_AttachedEffects;
 
+    void UpdateOnIdle();
+
     void SetAnimation(const std::string& _key) const {m_AnimPlayer->SetAnimation(m_Data->GetAnimation(_key));}
     void SetAnimationImmediately(const std::string& _key) const {m_AnimPlayer->SetAnimationImmediately(m_Data->GetAnimation(_key));}
     bool CheckCurAnimation(const std::string& _key) const {return m_AnimPlayer->GetCurrentAnimation()->GetKey() == _key;}
-    bool CheckInputs(std::string* _cancelTable);
+    bool CheckInputs(const std::string* _cancelTable);
+    bool CheckKaraCancelableInputs(const std::string* _cancelTable);
     void Jump();
     void SetState(State _state);
     void OnShieldBreak();
