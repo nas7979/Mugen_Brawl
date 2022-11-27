@@ -64,7 +64,8 @@ private:
     cInputField* m_HitBoxAirGrowthKnockBackField;
     cInputField* m_HitBoxAirHitStunMulField;
     
-    cInputField* m_ThrowBoxCanThrowMidairField;
+    cInputField* m_ThrowBoxCanThrowAirField;
+    cInputField* m_ThrowBoxCanThrowGroundField;
     
     std::map<SerializedString, cCharacterAnimation*>* m_Animations;
     int m_CurPalette = 0;

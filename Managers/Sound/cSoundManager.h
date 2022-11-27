@@ -18,9 +18,9 @@ private:
 public:
     void AddSound(std::wstring& _path, std::string& _key);
     CSound* CreateSound(std::wstring& _path);
-    CSound* CreateFromMemory(LPWAVEFORMATEX _format, char* _buffer, UINT& pointer, size_t _size);
-    LPDIRECTSOUNDBUFFER Play(std::string _key, int volume);
-    LPDIRECTSOUNDBUFFER Play(CSound* _sound, int volume);
+    CSound* CreateFromMemory(LPWAVEFORMATEX _format, char* _buffer, UINT& _pointer, size_t _size);
+    LPDIRECTSOUNDBUFFER Play(std::string _key, int _volume, bool _addToList = true);
+    LPDIRECTSOUNDBUFFER Play(CSound* _sound, int _volume, bool _addToList = true);
     void StopAll();
 };
 

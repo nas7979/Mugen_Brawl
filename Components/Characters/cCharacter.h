@@ -97,6 +97,7 @@ private:
     RECT m_PrevBodyRect;
     Vec2 m_PrevPos;
     cBlock* m_CurGround = nullptr;
+    LPDIRECTSOUNDBUFFER m_Voice = nullptr;
     BYTE m_BlockAirDashTimer;
     BYTE m_KaraCancelTimer;
 
@@ -149,4 +150,5 @@ public:
     const std::vector<RECT>& GetHurtBoxes() const {return m_HurtBoxes;}
     const std::vector<RECT>& GetHitBoxes() const {return m_HitBoxes;}
     const std::vector<RECT>& GetThrowBoxes() const {return m_ThrowBoxes;}
+    void CheckAndReleaseVoice();
 };

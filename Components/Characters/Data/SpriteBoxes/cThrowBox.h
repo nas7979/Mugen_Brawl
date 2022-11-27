@@ -12,9 +12,12 @@ public:
     size_t GetSize() const override;
 
 private:
-    int m_CanThrowMidair = false;
+    short m_CanThrowAir = false;
+    short m_CanThrowGround = false;
 
 public:
-    void SetCanThrowMidair(bool _set) {m_CanThrowMidair = _set;}
-    bool GetCanThrowMidair() const {return m_CanThrowMidair;}
+    void SetCanThrowAir(bool _set) {m_CanThrowAir = _set;}
+    bool GetCanThrowAir() const {return m_CanThrowAir;}
+    void SetCanThrowGround(bool _set) {m_CanThrowGround = _set;}
+    bool GetCanThrowGround() const {return m_CanThrowGround;}
 };

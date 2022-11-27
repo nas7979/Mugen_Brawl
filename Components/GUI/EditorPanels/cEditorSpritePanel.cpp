@@ -320,15 +320,25 @@ void cEditorSpritePanel::Init()
     });
     m_HitBoxFields.push_back(m_HitBoxAirGrowthKnockBackField->GetOwner());
 
-    m_ThrowBoxCanThrowMidairField = CreateInputField(Vec2(1920 - 85, 700), Vec2(100, 40), "Can Throw Midair", 24, false);
-    m_ThrowBoxCanThrowMidairField->SetOnTextChanged([&](cInputField* _this)->void
+    m_ThrowBoxCanThrowAirField = CreateInputField(Vec2(1920 - 85, 700), Vec2(100, 40), "Can Throw Air", 24, false);
+    m_ThrowBoxCanThrowAirField->SetOnTextChanged([&](cInputField* _this)->void
     {
         m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
         {
-            ((cThrowBox*)_selected.box)->SetCanThrowMidair(_this->GetInt());
+            ((cThrowBox*)_selected.box)->SetCanThrowAir(_this->GetInt());
         });
     });
-    m_ThrowBoxFields.push_back(m_ThrowBoxCanThrowMidairField->GetOwner());
+    m_ThrowBoxFields.push_back(m_ThrowBoxCanThrowAirField->GetOwner());
+
+    m_ThrowBoxCanThrowGroundField = CreateInputField(Vec2(1920 - 190, 700), Vec2(100, 40), "Can Throw Ground", 24, false);
+    m_ThrowBoxCanThrowGroundField->SetOnTextChanged([&](cInputField* _this)->void
+    {
+        m_SpriteBoxArea->WithSelectedBoxes([&](cSpriteBoxArea::SelectedBox _selected)->void
+        {
+            ((cThrowBox*)_selected.box)->SetCanThrowGround(_this->GetInt());
+        });
+    });
+    m_ThrowBoxFields.push_back(m_ThrowBoxCanThrowGroundField->GetOwner());
 
     OnSelectSpriteBox(cSpriteBoxArea::Select, std::vector<cSpriteBoxArea::SelectedBox>());
 }
@@ -752,7 +762,7 @@ bool cEditorSpritePanel::HasFocusedGUI()
     || m_SpriteEventKeyField->IsFocused() || m_PaletteIndexField->IsFocused() || m_HexColorField->IsFocused() || m_FixedPaletteField->IsFocused() || m_SpriteBoxArea->HasSelectedBox()
     || m_SpriteBoxEventKeyField->IsFocused() || m_HitBoxDamageField->IsFocused() || m_HitBoxDirectionField->IsFocused() || m_HitBoxHitStunMulField->IsFocused()
     || m_HitBoxShieldStunMulField->IsFocused() || m_HitBoxShieldDamageMulField->IsFocused() || m_HitBoxBaseKnockBackField->IsFocused() || m_HitBoxGrowthKnockBackField->IsFocused()
-    || m_ThrowBoxCanThrowMidairField->IsFocused() || m_AnimationsScrollView->GetSelectedIndex() >= 0 || m_AnimationEventKeyField->IsFocused()
+    || m_ThrowBoxCanThrowAirField->IsFocused() || m_ThrowBoxCanThrowGroundField->IsFocused() || m_AnimationsScrollView->GetSelectedIndex() >= 0 || m_AnimationEventKeyField->IsFocused()
     ;
 }
 
@@ -877,7 +887,8 @@ void cEditorSpritePanel::OnSelectSpriteBox(cSpriteBoxArea::DrawType _type, std::
     else if (_type == cSpriteBoxArea::ThrowBox)
     {
         cThrowBox* box = (cThrowBox*)_boxes[0].box;
-        m_HitBoxDamageField->SetText(box->GetCanThrowMidair() ? "1" : "0", false);
+        m_ThrowBoxCanThrowAirField->SetText(box->GetCanThrowAir() ? "1" : "0", false);
+        m_ThrowBoxCanThrowGroundField->SetText(box->GetCanThrowGround() ? "1" : "0", false);
     }
 
     if (_type != cSpriteBoxArea::AttachPoint)

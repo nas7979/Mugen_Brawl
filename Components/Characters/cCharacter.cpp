@@ -444,6 +444,14 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
         return;
     }
 
+    if (_key == "Voice")
+    {
+        CheckAndReleaseVoice();
+        cSound* sound = m_Data->GetSoundSet(_value)->PickSound();
+        m_Voice = SOUND->Play(sound->GetSound(), (int)sound->GetVolume(), false);
+        return;
+    }
+
     if (_key == "ResetHit")
     {
         m_AttackedCharacters.GetValue()->clear();
@@ -553,7 +561,7 @@ void cCharacter::CollisionCheck()
             
             for (int i = 0; i < m_ThrowBoxes.size(); i++)
             {
-                if (!curSprite->GetThrowBox(i)->GetCanThrowMidair() && other->HasFlag(Flag::InAir))
+                if ((curSprite->GetThrowBox(i)->GetCanThrowGround() && other->HasFlag(Flag::InAir)) || (curSprite->GetThrowBox(i)->GetCanThrowAir() && !other->HasFlag(Flag::InAir)))
                     continue;
                 
                 for (int j = 0; j < other->GetBodyBoxes().size(); j++)
@@ -865,8 +873,9 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
                 cSoundSet* soundSet = m_Data->GetSoundSet(command);
                 if (soundSet != nullptr)
                 {
+                    CheckAndReleaseVoice();
                     cSound* sound = soundSet->PickSound();
-                    SOUND->Play(sound->GetSound(), sound->GetVolume());
+                    m_Voice = SOUND->Play(sound->GetSound(), sound->GetVolume(), false);
                 }
 
                 INPUT->ClearInputBuffer(m_PlayerIndex);
@@ -896,6 +905,9 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
 
     if (normalInput[1] != 0 && (_cancelTable == nullptr || _cancelTable->find(normalInput) != std::string::npos))
     {
+        if (m_State != State::Action)
+            m_KaraCancelTimer = 3;
+
         SetState(State::Action);
         SetAnimationImmediately(normalInput);
         RemoveFlag(Flag::Dashing);
@@ -906,12 +918,11 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
 
         char attackSound[] = "Attack_A";
         attackSound[7] = normalInput[1] + ('A' - 'a');
+        CheckAndReleaseVoice();
         cSound* sound = m_Data->GetSoundSet(attackSound)->PickSound();
-        SOUND->Play(sound->GetSound(), sound->GetVolume());
+        m_Voice = SOUND->Play(sound->GetSound(), sound->GetVolume(), false);
 
         INPUT->ClearInputBuffer(m_PlayerIndex);
-
-        m_KaraCancelTimer = 3;
         return true;
     }
 
@@ -977,6 +988,9 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
 
 bool cCharacter::CheckKaraCancelableInputs(const std::string* _cancelTable)
 {
+    if (_cancelTable != nullptr)
+        return false;
+    
     if (INPUT->CheckGameInput(IngameInput::A, m_PlayerIndex) && INPUT->CheckGameInput(IngameInput::B, m_PlayerIndex))
     {
         if (HasFlag(Flag::InAir))
@@ -990,9 +1004,9 @@ bool cCharacter::CheckKaraCancelableInputs(const std::string* _cancelTable)
         
         SetState(State::Action);
         m_KaraCancelTimer = 0;
+        CheckAndReleaseVoice();
         return true;
     }
-
     
     return false;
 }
@@ -1128,7 +1142,9 @@ void cCharacter::Reset()
     m_ThrowingCharacter = nullptr;
     m_IsCollidedWithWall = false;
     m_CurGround = nullptr;
-    m_BlockAirDashTimer= 0;
+    m_BlockAirDashTimer = 0;
+    m_KaraCancelTimer = 0;
+    m_Voice = nullptr;
 }
 
 void cCharacter::AddVelocity(const Vec2& _vel, bool _reset)
@@ -1220,4 +1236,13 @@ void cCharacter::UpdateRects()
     cBodyBox** bodyBoxes;
     for (int i = 0; i < curSprite->GetBodyBoxes(bodyBoxes); i++)
         updateFunc(bodyBoxes[i], m_BodyBoxes);
+}
+
+void cCharacter::CheckAndReleaseVoice()
+{
+    if (m_Voice == nullptr)
+        return;
+
+    m_Voice->Release();
+    m_Voice = nullptr;
 }

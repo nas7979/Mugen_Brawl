@@ -47,26 +47,27 @@ CSound* cSoundManager::CreateSound(std::wstring& _path)
     return sound;
 }
 
-CSound* cSoundManager::CreateFromMemory(LPWAVEFORMATEX _format, char* _buffer, UINT& pointer, size_t _size)
+CSound* cSoundManager::CreateFromMemory(LPWAVEFORMATEX _format, char* _buffer, UINT& _pointer, size_t _size)
 {
     CSound* sound;
-    m_Manager.CreateFromMemory(&sound, (BYTE*)_buffer + pointer, _size, _format, DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN);
-    pointer += _size;
+    m_Manager.CreateFromMemory(&sound, (BYTE*)_buffer + _pointer, _size, _format, DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN);
+    _pointer += _size;
     return sound;
 }
 
-LPDIRECTSOUNDBUFFER cSoundManager::Play(std::string _key, int volume)
+LPDIRECTSOUNDBUFFER cSoundManager::Play(std::string _key, int _volume, bool _addToList)
 {
-    return Play(m_Sounds[_key], volume);
+    return Play(m_Sounds[_key], _volume, _addToList);
 }
 
-LPDIRECTSOUNDBUFFER cSoundManager::Play(CSound* _sound, int volume)
+LPDIRECTSOUNDBUFFER cSoundManager::Play(CSound* _sound, int volume, bool _addToList)
 {
     LPDIRECTSOUNDBUFFER buffer;
     m_Manager.GetDirectSound()->DuplicateSoundBuffer(_sound->GetBuffer(0), &buffer);
     buffer->SetVolume(DSBVOLUME_MIN + (int)((float)volume * (100.f / 255.f)) * 100);
     buffer->Play(0,0,0);
-    m_Channels.push_back(buffer);
+    if (_addToList)
+        m_Channels.push_back(buffer);
     return buffer;
 }
 
