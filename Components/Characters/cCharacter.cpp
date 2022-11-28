@@ -72,7 +72,6 @@ void cCharacter::Update()
             {
                 m_AttackedCharacters.GetValue()->clear();
                 m_CanCancel = false;
-                return;
             }
         }
     }
@@ -196,6 +195,7 @@ void cCharacter::Render()
 void cCharacter::Release()
 {
     GAME->SetCharacter(nullptr, m_PlayerIndex);
+    CheckAndReleaseVoice();
 }
 
 void cCharacter::OnCollision(cObject* _other)
@@ -734,7 +734,20 @@ void cCharacter::UpdateOnIdle()
         }
     }
 
-    if (!HasFlag(Flag::InAir))
+    if (HasFlag(Flag::InAir))
+    {
+        if (isLeftPressed)
+        {
+            if (m_Velocity.x > -m_Data->GetAirSpeed() / 60.f)
+                m_Velocity.x = max(-m_Data->GetAirSpeed() / 60.f, m_Velocity.x - m_Data->GetAirSpeed() / 600.f);
+        }
+        if (isRightPressed)
+        {
+            if (m_Velocity.x < m_Data->GetAirSpeed() / 60.f)
+                m_Velocity.x = min(m_Data->GetAirSpeed() / 60.f, m_Velocity.x + m_Data->GetAirSpeed() / 600.f);
+        }
+    }
+    else
     {
         if (INPUT->CheckGameInput(IngameInput::Down, m_PlayerIndex))
         {
