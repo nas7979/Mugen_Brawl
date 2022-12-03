@@ -439,16 +439,13 @@ void cCharacter::HandleSpriteEvent(const std::string& _key, const std::string& _
 {
     if (_key == "Sound")
     {
-        cSound* sound = m_Data->GetSoundSet(_value)->PickSound();
-        SOUND->Play(sound->GetSound(), (int)sound->GetVolume());
+        PlaySound(_value, false);
         return;
     }
 
     if (_key == "Voice")
     {
-        CheckAndReleaseVoice();
-        cSound* sound = m_Data->GetSoundSet(_value)->PickSound();
-        m_Voice = SOUND->Play(sound->GetSound(), (int)sound->GetVolume(), false);
+        PlaySound(_value, true);
         return;
     }
 
@@ -883,13 +880,7 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
                 RemoveFlag(Flag::Dashing);
                 SetAnimationImmediately(command);
 
-                cSoundSet* soundSet = m_Data->GetSoundSet(command);
-                if (soundSet != nullptr)
-                {
-                    CheckAndReleaseVoice();
-                    cSound* sound = soundSet->PickSound();
-                    m_Voice = SOUND->Play(sound->GetSound(), sound->GetVolume(), false);
-                }
+                PlaySound(command, true);
 
                 INPUT->ClearInputBuffer(m_PlayerIndex);
                 return true;
@@ -931,9 +922,7 @@ bool cCharacter::CheckInputs(const std::string* _cancelTable)
 
         char attackSound[] = "Attack_A";
         attackSound[7] = normalInput[1] + ('A' - 'a');
-        CheckAndReleaseVoice();
-        cSound* sound = m_Data->GetSoundSet(attackSound)->PickSound();
-        m_Voice = SOUND->Play(sound->GetSound(), sound->GetVolume(), false);
+        PlaySound(attackSound, true);
 
         INPUT->ClearInputBuffer(m_PlayerIndex);
         return true;
@@ -1249,6 +1238,24 @@ void cCharacter::UpdateRects()
     cBodyBox** bodyBoxes;
     for (int i = 0; i < curSprite->GetBodyBoxes(bodyBoxes); i++)
         updateFunc(bodyBoxes[i], m_BodyBoxes);
+}
+
+void cCharacter::PlaySound(std::string _key, bool _isVoice)
+{
+    cSoundSet* soundSet = m_Data->GetSoundSet(_key);
+    if (soundSet == nullptr)
+        return;
+
+    cSound* sound = soundSet->PickSound();
+    if (_isVoice)
+    {
+        CheckAndReleaseVoice();
+        m_Voice = SOUND->Play(sound->GetSound(), sound->GetVolume(), false);
+    }
+    else
+    {
+        SOUND->Play(sound->GetSound(), sound->GetVolume(), true);
+    }
 }
 
 void cCharacter::CheckAndReleaseVoice()

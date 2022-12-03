@@ -150,5 +150,6 @@ public:
     const std::vector<RECT>& GetHurtBoxes() const {return m_HurtBoxes;}
     const std::vector<RECT>& GetHitBoxes() const {return m_HitBoxes;}
     const std::vector<RECT>& GetThrowBoxes() const {return m_ThrowBoxes;}
+    void PlaySound(std::string _key, bool _isVoice);
     void CheckAndReleaseVoice();
 };
